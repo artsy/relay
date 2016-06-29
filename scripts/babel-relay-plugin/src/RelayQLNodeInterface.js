@@ -13,7 +13,7 @@
 'use strict';
 
 const RelayQLNodeInterface = {
-  ID: 'id',
+  ID: '__id',
 };
 
 module.exports = RelayQLNodeInterface;

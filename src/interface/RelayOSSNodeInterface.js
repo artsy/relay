@@ -35,7 +35,7 @@ type RootCallInfo = {
  */
 const RelayOSSNodeInterface = {
   ANY_TYPE: '__any',
-  ID: 'id',
+  ID: '__id',
   ID_TYPE: 'ID!',
   NODE: 'node',
   NODE_TYPE: 'Node',
