@@ -14,25 +14,14 @@
 
 /* eslint-disable consistent-this */
 
-import type {
-  ConcreteField,
-  ConcreteFieldMetadata,
-  ConcreteFragment,
-  ConcreteMutation,
-  ConcreteNode,
-  ConcreteOperationMetadata,
-  ConcreteQuery,
-  ConcreteQueryMetadata,
-} from 'ConcreteQuery';
 const QueryBuilder = require('QueryBuilder');
 const RelayConnectionInterface = require('RelayConnectionInterface');
 const RelayFragmentReference = require('RelayFragmentReference');
-import type {Call, Directive}  from 'RelayInternalTypes';
 const RelayMetaRoute = require('RelayMetaRoute');
 const RelayProfiler = require('RelayProfiler');
 const RelayRouteFragment = require('RelayRouteFragment');
-import type {Variables} from 'RelayTypes';
 const RelayVariable = require('RelayVariable');
+const RelayVariables = require('RelayVariables');
 
 const areEqual = require('areEqual');
 const callsFromGraphQL = require('callsFromGraphQL');
@@ -41,9 +30,26 @@ const directivesToGraphQL = require('directivesToGraphQL');
 const generateConcreteFragmentID = require('generateConcreteFragmentID');
 const generateRQLFieldAlias = require('generateRQLFieldAlias');
 const invariant = require('invariant');
+const nullthrows = require('nullthrows');
 const serializeRelayQueryCall = require('serializeRelayQueryCall');
 const shallowEqual = require('shallowEqual');
 const stableStringify = require('stableStringify');
+
+const {getFragmentSpreadArguments} = require('RelayVariables');
+
+import type {
+  ConcreteField,
+  ConcreteFieldMetadata,
+  ConcreteFragment,
+  ConcreteMutation,
+  ConcreteNode,
+  ConcreteOperationDefinition,
+  ConcreteOperationMetadata,
+  ConcreteQuery,
+  ConcreteQueryMetadata,
+} from 'ConcreteQuery';
+import type {Call, Directive}  from 'RelayInternalTypes';
+import type {Variables} from 'RelayTypes';
 
 type BatchCall = {
   refParamName: string,
@@ -68,6 +74,21 @@ const INCLUDE = 'include';
 
 let _nextQueryID = 0;
 
+/**
+ * When a modern container is rendered within a legacy RelayRootContainer or
+ * RelayRenderer, that container's fragment may need to reference global
+ * vaiables. This means that adding a single new-style container to an existing
+ * codebase could require setting up global variables on all routes that may
+ * ever be used to render any ancestor of the component - not ideal. In a pure
+ * modern-style app all such globals would be set via the `variables` prop on
+ * the renderer, but as a workaround for incrementally converting components, an
+ * application can configure default global variables to be used on all queries.
+ */
+let _defaultGlobalVariables = null;
+function setDefaultGlobalVariables(variables: Variables): void {
+  _defaultGlobalVariables = variables;
+}
+
 const DEFAULT_FRAGMENT_METADATA = {
   isDeferred: false,
   isContainerFragment: false,
@@ -80,6 +101,19 @@ if (__DEV__) {
   Object.freeze(EMPTY_CALLS);
   Object.freeze(EMPTY_DIRECTIVES);
 }
+
+/**
+ * A type representing information about the root node:
+ * - routeName: The name of the route
+ * - variables: The variables in scope at the root.
+ *
+ * This allows route variables to passed down the tree and accessed by arbitrary
+ * fragments.
+ */
+type RootContext = {
+  routeName: string,
+  variables: Variables,
+};
 
 /**
  * @internal
@@ -112,17 +146,18 @@ class RelayQueryNode {
   __fieldMap__: ?{[key: string]: RelayQueryField};
   __hasDeferredDescendant__: ?boolean;
   __hasValidatedConnectionCalls__: ?boolean;
-  __route__: RelayMetaRoute;
+  __root__: RootContext;
   __serializationKey__: ?string;
   __storageKey__: ?string;
   __variables__: Variables;
 
   static create(
     concreteNode: mixed,
-    route: RelayMetaRoute,
+    metaRoute: RelayMetaRoute,
     variables: Variables
   ): RelayQueryNode {
-    const node = createNode(concreteNode, route, variables);
+    const rootContext = createRootContext(metaRoute, variables);
+    const node = createNode(concreteNode, rootContext, variables);
     invariant(
       node instanceof RelayQueryNode,
       'RelayQueryNode.create(): ' +
@@ -138,7 +173,7 @@ class RelayQueryNode {
    */
   constructor(
     concreteNode: any,
-    route: RelayMetaRoute,
+    rootContext: RootContext,
     variables: Variables
   ) {
     invariant(
@@ -146,7 +181,7 @@ class RelayQueryNode {
       'RelayQueryNode: Abstract class cannot be instantiated.'
     );
     this.__concreteNode__ = concreteNode;
-    this.__route__ = route;
+    this.__root__ = rootContext;
     this.__variables__ = variables;
 
     // lazily computed properties
@@ -194,7 +229,7 @@ class RelayQueryNode {
 
     const clone = RelayQueryNode.create(
       this.__concreteNode__,
-      this.__route__,
+      RelayMetaRoute.get(this.__root__.routeName),
       this.__variables__
     );
     clone.__children__ = nextChildren;
@@ -217,7 +252,7 @@ class RelayQueryNode {
           }
           const nodeOrNodes = createNode(
             concreteChild,
-            this.__route__,
+            this.__root__,
             this.__variables__
           );
           if (Array.isArray(nodeOrNodes)) {
@@ -290,7 +325,7 @@ class RelayQueryNode {
   }
 
   getRoute(): RelayMetaRoute {
-    return this.__route__;
+    return RelayMetaRoute.get(this.__root__.routeName);
   }
 
   getVariables(): Variables {
@@ -342,7 +377,8 @@ class RelayQueryNode {
   isEquivalent(that: RelayQueryNode): boolean {
     return (
       this.__concreteNode__ === that.__concreteNode__ &&
-      this.__route__ === that.__route__ &&
+      this.__root__.routeName === that.__root__.routeName &&
+      shallowEqual(this.__root__.variables, that.__root__.variables) &&
       shallowEqual(this.__variables__, that.__variables__)
     );
   }
@@ -350,7 +386,7 @@ class RelayQueryNode {
   createNode(concreteNode: any): RelayQueryNode {
     return RelayQueryNode.create(
       concreteNode,
-      this.__route__,
+      RelayMetaRoute.get(this.__root__.routeName),
       this.__variables__
     );
   }
@@ -401,10 +437,13 @@ class RelayQueryRoot extends RelayQueryNode {
       name,
       type,
     });
+    const variables = {};
+    const metaRoute = RelayMetaRoute.get(routeName || '$RelayQuery');
+    const rootContext = createRootContext(metaRoute, variables);
     const root = new RelayQueryRoot(
       concreteRoot,
-      RelayMetaRoute.get(routeName || '$RelayQuery'),
-      {}
+      rootContext,
+      variables,
     );
     root.__children__ = nextChildren;
     return root;
@@ -412,7 +451,7 @@ class RelayQueryRoot extends RelayQueryNode {
 
   static create(
     concreteNode: mixed,
-    route: RelayMetaRoute,
+    metaRoute: RelayMetaRoute,
     variables: Variables
   ): RelayQueryRoot {
     const query = QueryBuilder.getQuery(concreteNode);
@@ -421,19 +460,20 @@ class RelayQueryRoot extends RelayQueryNode {
       'RelayQueryRoot.create(): Expected a GraphQL `query { ... }`, got: %s',
       concreteNode
     );
+    const rootContext = createRootContext(metaRoute, variables);
     return new RelayQueryRoot(
       query,
-      route,
+      rootContext,
       variables
     );
   }
 
   constructor(
     concreteNode: ConcreteQuery,
-    route: RelayMetaRoute,
+    rootContext: RootContext,
     variables: Variables
   ) {
-    super(concreteNode, route, variables);
+    super(concreteNode, rootContext, variables);
     this.__batchCall__ = undefined;
     this.__id__ = undefined;
     this.__identifyingArg__ = undefined;
@@ -561,17 +601,17 @@ class RelayQueryRoot extends RelayQueryNode {
 
   cloneWithRoute(
     children: NextChildren,
-    route: RelayMetaRoute
+    metaRoute: RelayMetaRoute
   ): ?RelayQueryNode {
-    if (this.__route__ === route) {
+    if (this.__root__.routeName === metaRoute.name) {
       return this.clone(children);
     }
     const clone = RelayQueryNode.create(
       {
         ...this.__concreteNode__,
-        name: route.name,
+        name: metaRoute.name,
       },
-      route,
+      metaRoute,
       this.__variables__
     );
     clone.__children__ = children;
@@ -601,6 +641,96 @@ class RelayQueryRoot extends RelayQueryNode {
 /**
  * @internal
  *
+ * Wraps access to OSS GraphQL query nodes created with
+ *
+ *    graphql`query ...`
+ *
+ * Unlike RelayQueryRoot (which represents the semantics of legacy GraphQL
+ * queries), this class supports multiple, arbitrary root fields within a single
+ * query. Fields may have arbitrary numbers of arguments, return connections,
+ * have aliases, etc.
+ */
+class RelayOSSQuery extends RelayQueryNode {
+  __id__: ?string;
+
+  static create(
+    concreteNode: mixed,
+    metaRoute: RelayMetaRoute,
+    variables: Variables
+  ): RelayOSSQuery {
+    const operation = QueryBuilder.getOperationDefinition(concreteNode);
+    invariant(
+      operation,
+      'RelayQueryRoot.create(): Expected a value created with graphql`query { ... }` ' +
+      '(using the `graphql` tag), got: %s',
+      concreteNode,
+    );
+    const rootContext = createRootContext(metaRoute, variables);
+    return new RelayOSSQuery(
+      operation,
+      rootContext,
+      variables
+    );
+  }
+
+  constructor(
+    concreteNode: ConcreteOperationDefinition,
+    rootContext: RootContext,
+    variables: Variables
+  ) {
+    invariant(
+      concreteNode && concreteNode.operation === 'query',
+      'RelayQueryRoot.create(): Expected a value created with graphql`query { ... }` ' +
+      '(using the `graphql` tag), got: %s',
+      concreteNode,
+    );
+    super(concreteNode.node, rootContext, variables);
+    this.__id__ = undefined;
+
+    // Ensure IDs are generated in the order that queries are created
+    this.getID();
+  }
+
+  canHaveSubselections(): boolean {
+    return true;
+  }
+
+  isDeferred(): boolean {
+    return false;
+  }
+
+  getName(): string {
+    let name = (this.__concreteNode__: ConcreteQuery).name;
+    if (!name) {
+      name = this.getID();
+      (this.__concreteNode__: ConcreteQuery).name = name;
+    }
+    return name;
+  }
+
+  getID(): string {
+    let id = this.__id__;
+    if (id == null) {
+      id = 'q' + _nextQueryID++;
+      this.__id__ = id;
+    }
+    return id;
+  }
+
+  equals(that: RelayQueryNode): boolean {
+    if (this === that) {
+      return true;
+    }
+    if (!(that instanceof RelayOSSQuery)) {
+      return false;
+    }
+    return super.equals(that);
+  }
+}
+
+/**
+ * @internal
+ *
  * Abstract base class for mutations and subscriptions.
  */
 class RelayQueryOperation extends RelayQueryNode {
@@ -608,10 +738,10 @@ class RelayQueryOperation extends RelayQueryNode {
 
   constructor(
     concreteNode: any,
-    route: RelayMetaRoute,
+    rootContext: RootContext,
     variables: Variables
   ) {
-    super(concreteNode, route, variables);
+    super(concreteNode, rootContext, variables);
     invariant(
       this.constructor.name !== 'RelayQueryOperation',
       'RelayQueryOperation: Abstract class cannot be instantiated.'
@@ -713,10 +843,13 @@ class RelayQueryMutation extends RelayQueryOperation {
       name,
       responseType,
     });
+    const variables = {input: callValue || ''};
+    const metaRoute = RelayMetaRoute.get(routeName || '$RelayQuery');
+    const rootContext = createRootContext(metaRoute, variables);
     const mutation = new RelayQueryMutation(
       concreteMutation,
-      RelayMetaRoute.get(routeName || '$RelayQuery'),
-      {input: callValue || ''}
+      rootContext,
+      variables,
     );
     mutation.__children__ = nextChildren;
     return mutation;
@@ -747,7 +880,7 @@ class RelayQueryMutation extends RelayQueryOperation {
 class RelayQuerySubscription extends RelayQueryOperation {
   static create(
     concreteNode: mixed,
-    route: RelayMetaRoute,
+    metaRoute: RelayMetaRoute,
     variables: Variables
   ): RelayQuerySubscription {
     const subscription = QueryBuilder.getSubscription(concreteNode);
@@ -757,9 +890,10 @@ class RelayQuerySubscription extends RelayQueryOperation {
       'Expected a GraphQL `subscription { ... }`, got: %s',
       concreteNode
     );
+    const rootContext = createRootContext(metaRoute, variables);
     return new RelayQuerySubscription(
       concreteNode,
-      route,
+      rootContext,
       variables
     );
   }
@@ -804,22 +938,23 @@ class RelayQueryFragment extends RelayQueryNode {
   static build(
     name: string,
     type: string,
-    /* $FlowIssue: #11220887
-       `Array<Subclass-of-RelayQueryNode>` should be compatible here. */
     children?: ?Array<RelayQueryNode>,
     metadata?: ?{[key: string]: mixed},
     routeName?: string
   ): RelayQueryFragment {
     const nextChildren = children ? children.filter(child => !!child) : [];
-    const concreteFragment = QueryBuilder.createFragment({
+    const concreteFragment = QueryBuilder.createFragment(({
       name,
       type,
       metadata,
-    });
+    }: any));
+    const variables = {};
+    const metaRoute = RelayMetaRoute.get(routeName || '$RelayQuery');
+    const rootContext = createRootContext(metaRoute, variables);
     const fragment = new RelayQueryFragment(
       concreteFragment,
-      RelayMetaRoute.get(routeName || '$RelayQuery'),
-      {},
+      rootContext,
+      variables,
       {
         isDeferred: !!(metadata && metadata.isDeferred),
         isContainerFragment: !!(metadata && metadata.isContainerFragment),
@@ -832,7 +967,7 @@ class RelayQueryFragment extends RelayQueryNode {
 
   static create(
     concreteNode: mixed,
-    route: RelayMetaRoute,
+    metaRoute: RelayMetaRoute,
     variables: Variables,
     metadata?: ?FragmentMetadata
   ): RelayQueryFragment {
@@ -843,9 +978,10 @@ class RelayQueryFragment extends RelayQueryNode {
       'Expected a GraphQL `fragment { ... }`, got: %s',
       concreteNode
     );
+    const rootContext = createRootContext(metaRoute, variables);
     return createMemoizedFragment(
       fragment,
-      route,
+      rootContext,
       variables,
       metadata || DEFAULT_FRAGMENT_METADATA
     );
@@ -853,11 +989,11 @@ class RelayQueryFragment extends RelayQueryNode {
 
   constructor(
     concreteNode: ConcreteFragment,
-    route: RelayMetaRoute,
+    rootContext: RootContext,
     variables: Variables,
     metadata?: FragmentMetadata
   ) {
-    super(concreteNode, route, variables);
+    super(concreteNode, rootContext, variables);
     this.__compositeHash__ = null;
     this.__metadata__ = metadata || DEFAULT_FRAGMENT_METADATA;
     this.__sourceCompositeHash__ = null;
@@ -891,10 +1027,9 @@ class RelayQueryFragment extends RelayQueryNode {
   getCompositeHash(): string {
     let compositeHash = this.__compositeHash__;
     if (!compositeHash) {
-      // TODO: Simplify this hash function, #9599170.
       compositeHash = generateRQLFieldAlias(
         this.getConcreteFragmentID() +
-        '.' + this.__route__.name +
+        '.' + this.__root__.routeName +
         '.' + stableStringify(this.__variables__)
       );
       this.__compositeHash__ = compositeHash;
@@ -922,7 +1057,7 @@ class RelayQueryFragment extends RelayQueryNode {
     const metadata = (this.__concreteNode__: ConcreteFragment).metadata;
     return !!(
       (// FB Printer
-      metadata.isPlural || metadata.plural)       // OSS Printer from `@relay`
+      (metadata.isPlural || metadata.plural))       // OSS Printer from `@relay`
     );
   }
 
@@ -934,7 +1069,7 @@ class RelayQueryFragment extends RelayQueryNode {
   cloneAsPlainFragment(): RelayQueryFragment {
     return createMemoizedFragment(
       this.__concreteNode__,
-      this.__route__,
+      this.__root__,
       this.__variables__,
       DEFAULT_FRAGMENT_METADATA
     );
@@ -999,7 +1134,7 @@ class RelayQueryField extends RelayQueryNode {
 
   static create(
     concreteNode: mixed,
-    route: RelayMetaRoute,
+    metaRoute: RelayMetaRoute,
     variables: Variables
   ): RelayQueryField {
     const field = QueryBuilder.getField(concreteNode);
@@ -1008,9 +1143,10 @@ class RelayQueryField extends RelayQueryNode {
       'RelayQueryField.create(): Expected a GraphQL field, got: %s',
       concreteNode
     );
+    const rootContext = createRootContext(metaRoute, variables);
     return new RelayQueryField(
       field,
-      route,
+      rootContext,
       variables
     );
   }
@@ -1047,10 +1183,13 @@ class RelayQueryField extends RelayQueryNode {
       metadata,
       type,
     });
+    const variables = {};
+    const metaRoute = RelayMetaRoute.get(routeName || '$RelayQuery');
+    const rootContext = createRootContext(metaRoute, variables);
     const field = new RelayQueryField(
       concreteField,
-      RelayMetaRoute.get(routeName || '$RelayQuery'),
-      {}
+      rootContext,
+      variables,
     );
     field.__children__ = nextChildren;
     return field;
@@ -1058,10 +1197,10 @@ class RelayQueryField extends RelayQueryNode {
 
   constructor(
     concreteNode: ConcreteField,
-    route: RelayMetaRoute,
+    rootContext: RootContext,
     variables: Variables
   ) {
-    super(concreteNode, route, variables);
+    super(concreteNode, rootContext, variables);
     this.__debugName__ = undefined;
     this.__isRefQueryDependency__ = false;
     this.__rangeBehaviorCalls__ = undefined;
@@ -1289,7 +1428,7 @@ class RelayQueryField extends RelayQueryNode {
   cloneAsRefQueryDependency(): RelayQueryField {
     const field = new RelayQueryField(
       this.__concreteNode__,
-      this.__route__,
+      this.__root__,
       this.__variables__
     );
     field.__children__ = [];
@@ -1324,7 +1463,7 @@ class RelayQueryField extends RelayQueryNode {
 
     const field = new RelayQueryField(
       this.__concreteNode__,
-      this.__route__,
+      this.__root__,
       this.__variables__
     );
     field.__children__ = nextChildren;
@@ -1351,7 +1490,7 @@ class RelayQueryField extends RelayQueryNode {
 
 function createNode(
   concreteNode: mixed,
-  route: RelayMetaRoute,
+  rootContext: RootContext,
   variables: Variables
 ): ?RelayQueryNode | Array<?RelayQueryNode> {
   invariant(
@@ -1368,13 +1507,13 @@ function createNode(
   } else if (kind === 'Fragment') {
     type = RelayQueryFragment;
   } else if (kind === 'FragmentReference') {
-    type = RelayQueryFragment;
+    // DEPRECATED in favor of ConcreteFragmentSpread
+    // TODO #14985090: delete ConcreteFragmentReference and callers
     const fragment = QueryBuilder.getFragment(concreteNode.fragment);
-    // TODO #9171213: Reference directives should override fragment directives
     if (fragment) {
       return createMemoizedFragment(
         fragment,
-        route,
+        rootContext,
         {},
         {
           isDeferred: false,
@@ -1383,6 +1522,33 @@ function createNode(
         }
       );
     }
+    return null;
+  } else if (kind === 'FragmentSpread') {
+    const spread = nullthrows(QueryBuilder.getFragmentSpread(concreteNode));
+    const argumentVariables = getFragmentSpreadArguments(
+      spread.fragment.node.name,
+      spread.args,
+      variables,
+      rootContext.variables,
+    );
+    const rootVariables = rootContext.variables;
+    const fragmentVariables = RelayVariables.getFragmentVariables(
+      spread.fragment,
+      rootVariables,
+      argumentVariables,
+    );
+    return createMemoizedFragment(
+      spread.fragment.node,
+      rootContext,
+      fragmentVariables,
+      {
+        isDeferred: false,
+        isContainerFragment: true,
+        isTypeConditional: false,
+      }
+    );
+  } else if (kind === 'OperationDefinition') {
+    type = RelayOSSQuery;
   } else if (kind === 'Query') {
     type = RelayQueryRoot;
   } else if (kind === 'Mutation') {
@@ -1390,26 +1556,28 @@ function createNode(
   } else if (kind === 'Subscription') {
     type = RelayQuerySubscription;
   } else if (concreteNode instanceof RelayRouteFragment) {
-    const fragment = concreteNode.getFragmentForRoute(route);
+    const metaRoute = RelayMetaRoute.get(rootContext.routeName);
+    const fragment = concreteNode.getFragmentForRoute(metaRoute);
     // May be null if no value was defined for this route.
     if (Array.isArray(fragment)) {
       // A route-conditional function may return a single fragment reference
       // or an array of fragment references.
       return fragment.map(frag => {
-        return createNode(frag, route, variables);
+        return createNode(frag, rootContext, variables);
       });
     } else if (fragment) {
-      return createNode(fragment, route, variables);
+      return createNode(fragment, rootContext, variables);
     }
     return null;
   } else if (concreteNode instanceof RelayFragmentReference) {
     const fragment = concreteNode.getFragment(variables);
-    const fragmentVariables = concreteNode.getVariables(route, variables);
+    const metaRoute = RelayMetaRoute.get(rootContext.routeName);
+    const fragmentVariables = concreteNode.getVariables(metaRoute, variables);
     if (fragment) {
       // the fragment may be null when `if` or `unless` conditions are not met.
       return createMemoizedFragment(
         fragment,
-        route,
+        rootContext,
         fragmentVariables,
         {
           isDeferred: concreteNode.isDeferred(),
@@ -1423,7 +1591,7 @@ function createNode(
   }
   return new type(
     (concreteNode: any),
-    route,
+    rootContext,
     variables
   );
 }
@@ -1434,18 +1602,20 @@ function createNode(
  */
 function createMemoizedFragment(
   concreteFragment: ConcreteFragment,
-  route: RelayMetaRoute,
+  rootContext: RootContext,
   variables: Variables,
   metadata: FragmentMetadata
 ): RelayQueryFragment {
-  const cacheKey = route.name + ':' + stableStringify(variables) + ':' +
-    stableStringify(metadata);
+  const cacheKey = rootContext.routeName +
+    ':' + stableStringify(rootContext.variables) +
+    ':' + stableStringify(variables) +
+    ':' + stableStringify(metadata);
   let fragment = (concreteFragment: any).__cachedFragment__;
   const fragmentCacheKey = (concreteFragment: any).__cacheKey__;
   if (!fragment || fragmentCacheKey !== cacheKey) {
     fragment = new RelayQueryFragment(
       concreteFragment,
-      route,
+      rootContext,
       variables,
       metadata
     );
@@ -1522,6 +1692,22 @@ function areCallValuesEqual(
   });
 }
 
+function createRootContext(
+  metaRoute: RelayMetaRoute,
+  variables: Variables,
+): RootContext {
+  if (_defaultGlobalVariables) {
+    variables = {
+      ..._defaultGlobalVariables,
+      ...variables,
+    };
+  }
+  return {
+    routeName: metaRoute.name,
+    variables,
+  };
+}
+
 RelayProfiler.instrumentMethods(RelayQueryNode.prototype, {
   clone: '@RelayQueryNode.prototype.clone',
   equals: '@RelayQueryNode.prototype.equals',
@@ -1542,6 +1728,8 @@ module.exports = {
   Mutation: RelayQueryMutation,
   Node: RelayQueryNode,
   Operation: RelayQueryOperation,
+  OSSQuery: RelayOSSQuery,
   Root: RelayQueryRoot,
   Subscription: RelayQuerySubscription,
+  setDefaultGlobalVariables,
 };

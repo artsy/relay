@@ -47,7 +47,7 @@ const RelayTestUtils = {
       }
     }
     ContextSetter.childContextTypes = {
-      relay: RelayPropTypes.Environment,
+      relay: RelayPropTypes.LegacyRelay,
       route: RelayPropTypes.QueryConfig.isRequired,
     };
 
@@ -59,13 +59,23 @@ const RelayTestUtils = {
 
     container = container || document.createElement('div');
 
+    let prevEnvironment;
+    let relay;
+
     return {
-      render(render, relay, route) {
+      render(render, environment, route) {
         invariant(
-          relay == null || relay instanceof RelayEnvironment,
+          environment == null || environment instanceof RelayEnvironment,
           'render(): Expected an instance of `RelayEnvironment`.'
         );
-        relay = relay || new RelayEnvironment();
+        environment = environment || prevEnvironment || new RelayEnvironment();
+        if (!relay || !prevEnvironment || prevEnvironment !== environment) {
+          prevEnvironment = environment;
+          relay = {
+            environment,
+            variables: {},
+          };
+        }
         route = route || RelayRoute.genMockInstance();
 
         let result;
@@ -471,6 +481,96 @@ const RelayTestUtils = {
             pass: true,
           };
         },
+      };
+    },
+
+    toWarn() {
+      function compare(negative) {
+        function formatItem(item) {
+          return item instanceof RegExp ?
+            item.toString() :
+            JSON.stringify(item);
+        }
+
+        function formatArray(array) {
+          return '[' + array.map(formatItem).join(', ') + ']';
+        }
+
+        function formatExpected(args) {
+          return formatArray([!!negative].concat(args));
+        }
+
+        function formatActual(calls) {
+          if (calls.length) {
+            return calls.map(args => {
+              return formatArray([!!args[0]].concat(args.slice(1)));
+            }).join(', ');
+          } else {
+            return '[]';
+          }
+        }
+
+        return function(actual, expected) {
+          const warning = require('warning');
+          if (!warning.mock) {
+            throw new Error(
+              'toWarn(): Requires `jest.mock(\'warning\')`.'
+            );
+          }
+
+          const callsCount = warning.mock.calls.length;
+          actual();
+          const calls = warning.mock.calls.slice(callsCount);
+
+          // Simple case: no explicit expectation.
+          if (!expected) {
+            const warned = calls.filter(args => !args[0]).length;
+            return {
+              pass: !(negative ? warned : !warned),
+              message: (
+                `Expected ${negative ? 'not ' : ''}to warn but ` +
+                '`warning` received the following calls: ' +
+                `${formatActual(calls)}.`
+              ),
+            };
+          }
+
+          // Custom case: explicit expectation.
+          if (!Array.isArray(expected)) {
+            expected = [expected];
+          }
+          const call = calls.find(args => {
+            return (
+              args.length === expected.length + 1 &&
+              args.every((arg, index) => {
+                if (!index) {
+                  return !arg;
+                }
+                const other = expected[index - 1];
+                return (
+                  other instanceof RegExp ?
+                  other.test(arg) :
+                  arg === other
+                );
+              })
+            );
+          });
+
+          return {
+            pass: !(negative ? call : !call),
+            message: (
+              `Expected ${negative ? 'not ' : ''}to warn: ` +
+              `${formatExpected(expected)} but ` +
+              '`warning` received the following calls: ' +
+              `${formatActual(calls)}.`
+            ),
+          };
+        };
+      }
+
+      return {
+        compare: compare(),
+        negativeCompare: compare(true),
       };
     },
 

@@ -11,6 +11,7 @@
 
 'use strict';
 
+jest.useFakeTimers();
 jest.mock('warning');
 
 require('configureForRelayOSS');
@@ -40,7 +41,7 @@ describe('RelayContainer.setVariables', function() {
   const {getNode, getPointer} = RelayTestUtils;
 
   beforeEach(function() {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     const fragment = Relay.QL`fragment on Node{url(site:$site)}`;
     entityQuery = jest.fn(() => fragment);

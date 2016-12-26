@@ -12,6 +12,8 @@
 
 'use strict';
 
+import type {VariableMapping} from 'RelayFragmentReference';
+
 /**
  * @internal
  *
@@ -22,33 +24,11 @@
  * Ideally this would be a union of Field/Fragment/Mutation/Query/Subscription,
  * but that causes lots of Flow errors.
  */
-export type ConcreteNode = {
-  children?: ?Array<?ConcreteSelection>,
-  directives?: ?Array<ConcreteDirective>,
-};
-
-export type ConcreteSelection =
-  ConcreteField |
-  ConcreteFragment |
-  ConcreteFragmentReference;
-
-export type ConcreteValue =
-  ConcreteBatchCallVariable |
-  ConcreteCallValue |
-  ConcreteCallVariable |
-  Array<ConcreteCallValue | ConcreteCallVariable>;
-
-export type ConcreteDirectiveValue =
-  ConcreteCallValue |
-  ConcreteCallVariable |
-  Array<ConcreteCallValue | ConcreteCallVariable>;
-
 export type ConcreteBatchCallVariable = {
   jsonPath: string,
   kind: 'BatchCallVariable',
   sourceQueryID: string,
 };
-
 export type ConcreteCall = {
   kind: 'Call',
   metadata: {
@@ -57,28 +37,37 @@ export type ConcreteCall = {
   name: string,
   value: ?ConcreteValue,
 };
-
 export type ConcreteCallValue = {
   callValue: mixed,
   kind: 'CallValue',
 }
-
 export type ConcreteCallVariable = {
   callVariableName: string,
   kind: 'CallVariable',
 };
-
 export type ConcreteDirective = {
   args: Array<ConcreteDirectiveArgument>,
   kind: 'Directive',
   name: string,
 };
-
 export type ConcreteDirectiveArgument = {
   name: string,
   value: ?ConcreteDirectiveValue,
 };
-
+export type ConcreteDirectiveValue =
+  ConcreteCallValue |
+  ConcreteCallVariable |
+  Array<ConcreteCallValue | ConcreteCallVariable>;
+export type ConcreteField = {
+  alias?: ?string,
+  calls?: ?Array<ConcreteCall>,
+  children?: ?Array<?ConcreteSelection>,
+  directives?: ?Array<ConcreteDirective>,
+  fieldName: string,
+  kind: 'Field',
+  metadata: ConcreteFieldMetadata,
+  type: string,
+};
 export type ConcreteFieldMetadata = {
   canHaveSubselections?: ?boolean,
   inferredPrimaryKey?: ?string,
@@ -91,24 +80,6 @@ export type ConcreteFieldMetadata = {
   isPlural?: boolean,
   isRequisite?: boolean,
 };
-
-export type ConcreteField = {
-  alias?: ?string,
-  calls?: ?Array<ConcreteCall>,
-  children?: ?Array<?ConcreteSelection>,
-  directives?: ?Array<ConcreteDirective>,
-  fieldName: string,
-  kind: 'Field',
-  metadata: ConcreteFieldMetadata,
-  type: string,
-};
-
-export type ConcreteFragmentMetadata = {
-  isAbstract?: boolean,
-  pattern?: boolean,
-  plural?: boolean,
-};
-
 export type ConcreteFragment = {
   children?: ?Array<?ConcreteSelection>,
   directives?: ?Array<ConcreteDirective>,
@@ -124,12 +95,21 @@ export type ConcreteFragment = {
   name: string,
   type: string,
 };
-
+export type ConcreteFragmentMetadata = {
+  isAbstract?: boolean,
+  pattern?: boolean,
+  plural?: boolean,
+};
+// DEPRECATED in favor of ConcreteFragmentSpread
+// This was used as a way to serialize the results of a
+// `Container.getFragment()` call to a JSON structure but
+// is no longer used.
+//
+// TODO #14985090: delete ConcreteFragmentReference and callers
 export type ConcreteFragmentReference = {
   kind: 'FragmentReference',
   fragment: ConcreteFragment,
 };
-
 export type ConcreteMutation = {
   calls: Array<ConcreteCall>,
   children?: ?Array<?ConcreteSelection>,
@@ -141,19 +121,13 @@ export type ConcreteMutation = {
   name: string,
   responseType: string,
 };
-
+export type ConcreteNode = {
+  children?: ?Array<?ConcreteSelection>,
+  directives?: ?Array<ConcreteDirective>,
+};
 export type ConcreteOperationMetadata = {
   inputType?: ?string,
 };
-
-export type ConcreteQueryMetadata = {
-  identifyingArgName: ?string,
-  identifyingArgType: ?string,
-  isAbstract: ?boolean,
-  isDeferred: ?boolean,
-  isPlural: ?boolean,
-};
-
 export type ConcreteQuery = {
   calls?: ?Array<ConcreteCall>,
   children?: ?Array<?ConcreteSelection>,
@@ -170,7 +144,18 @@ export type ConcreteQuery = {
   name: string,
   type: string,
 };
-
+export type ConcreteQueryMetadata = {
+  identifyingArgName: ?string,
+  identifyingArgType: ?string,
+  isAbstract: ?boolean,
+  isDeferred: ?boolean,
+  isPlural: ?boolean,
+};
+export type ConcreteSelection =
+  ConcreteField |
+  ConcreteFragment |
+  ConcreteFragmentReference |
+  ConcreteFragmentSpread;
 export type ConcreteSubscription = {
   calls: Array<ConcreteCall>,
   children?: ?Array<?ConcreteSelection>,
@@ -181,4 +166,50 @@ export type ConcreteSubscription = {
   metadata: {
     inputType?: ?string,
   },
+};
+export type ConcreteValue =
+  ConcreteBatchCallVariable |
+  ConcreteCallValue |
+  ConcreteCallVariable |
+  Array<ConcreteCallValue | ConcreteCallVariable>;
+
+export type ConcreteFragmentSpread = {
+  kind: 'FragmentSpread',
+  args: VariableMapping,
+  fragment: ConcreteFragmentDefinition,
+};
+
+/**
+ * The output of a graphql-tagged fragment definition.
+ */
+export type ConcreteFragmentDefinition = {
+  kind: 'FragmentDefinition',
+  argumentDefinitions: Array<ConcreteArgumentDefinition>,
+  node: ConcreteFragment,
+};
+
+export type ConcreteArgumentDefinition =
+  ConcreteLocalArgumentDefinition |
+  ConcreteRootArgumentDefinition;
+
+export type ConcreteLocalArgumentDefinition = {
+  kind: 'LocalArgument',
+  name: string,
+  defaultValue: mixed,
+};
+
+export type ConcreteRootArgumentDefinition = {
+  kind: 'RootArgument',
+  name: string,
+};
+
+/**
+ * The output of a graphql-tagged operation definition.
+ */
+export type ConcreteOperationDefinition = {
+  kind: 'OperationDefinition',
+  argumentDefinitions: Array<ConcreteLocalArgumentDefinition>,
+  name: string,
+  operation: 'mutation' | 'query' | 'subscription',
+  node: ConcreteFragment | ConcreteMutation | ConcreteSubscription,
 };

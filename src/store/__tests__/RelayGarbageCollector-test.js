@@ -13,6 +13,7 @@
 
 require('configureForRelayOSS');
 
+jest.useFakeTimers();
 jest
   .unmock('GraphQLRange')
   .unmock('GraphQLSegment');
@@ -53,7 +54,7 @@ describe('RelayGarbageCollector', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
     jasmine.addMatchers(RelayTestUtils.matchers);
   });
 

@@ -9,4 +9,4 @@
 
 'use strict';
 
-module.exports = require.requireActual('transformPayloadToRelayGraphMode');
+module.exports = require.requireActual('isLegacyRelayEnvironment');

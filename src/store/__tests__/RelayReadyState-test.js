@@ -11,6 +11,7 @@
 
 'use strict';
 
+jest.useFakeTimers();
 jest.mock('warning');
 
 const RelayReadyState = require('RelayReadyState');
@@ -23,7 +24,7 @@ describe('RelayReadyState', () => {
   let readyState;
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     onReadyStateChange = jest.fn();
     readyState = new RelayReadyState(onReadyStateChange);

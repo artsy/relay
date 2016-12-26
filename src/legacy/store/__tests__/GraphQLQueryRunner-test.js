@@ -13,6 +13,7 @@
 
 require('configureForRelayOSS');
 
+jest.useFakeTimers();
 jest
   .mock('warning')
   .unmock('GraphQLQueryRunner')
@@ -61,7 +62,7 @@ describe('GraphQLQueryRunner', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     const storeData = new RelayStoreData();
     networkLayer = storeData.getNetworkLayer();

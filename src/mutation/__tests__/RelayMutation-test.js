@@ -13,8 +13,8 @@
 
 require('configureForRelayOSS');
 
-jest
-  .unmock('RelayMutation');
+jest.mock('warning');
+jest.unmock('RelayMutation');
 
 const Relay = require('Relay');
 const RelayEnvironment = require('RelayEnvironment');
@@ -40,7 +40,7 @@ describe('RelayMutation', function() {
   }
 
   beforeEach(function() {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     environment = new RelayEnvironment();
     environment.read = jest.fn();

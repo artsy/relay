@@ -12,6 +12,11 @@
 
 'use strict';
 
+const RelayNodeInterface = require('RelayNodeInterface');
+
+const generateConcreteFragmentID = require('generateConcreteFragmentID');
+const warning = require('warning');
+
 import type {
   ConcreteBatchCallVariable,
   ConcreteCall,
@@ -23,9 +28,12 @@ import type {
   ConcreteField,
   ConcreteFieldMetadata,
   ConcreteFragment,
+  ConcreteFragmentDefinition,
   ConcreteFragmentMetadata,
   ConcreteFragmentReference,
+  ConcreteFragmentSpread,
   ConcreteMutation,
+  ConcreteOperationDefinition,
   ConcreteOperationMetadata,
   ConcreteQuery,
   ConcreteQueryMetadata,
@@ -33,10 +41,6 @@ import type {
   ConcreteSubscription,
   ConcreteValue,
 } from 'ConcreteQuery';
-const RelayNodeInterface = require('RelayNodeInterface');
-
-const generateConcreteFragmentID = require('generateConcreteFragmentID');
-const warning = require('warning');
 
 const EMPTY_CALLS: Array<ConcreteCall> = [];
 const EMPTY_CHILDREN: Array<?ConcreteSelection> = [];
@@ -305,8 +309,26 @@ const QueryBuilder = {
     }
   },
 
+  getFragmentDefinition(node: mixed): ?ConcreteFragmentDefinition {
+    if (isConcreteKind(node, 'FragmentDefinition')) {
+      return (node: any);
+    }
+  },
+
   getFragmentReference(node: mixed): ?ConcreteFragmentReference {
     if (isConcreteKind(node, 'FragmentReference')) {
+      return (node: any);
+    }
+  },
+
+  getFragmentSpread(node: mixed): ?ConcreteFragmentSpread {
+    if (isConcreteKind(node, 'FragmentSpread')) {
+      return (node: any);
+    }
+  },
+
+  getOperationDefinition(node: mixed): ?ConcreteOperationDefinition {
+    if (isConcreteKind(node, 'OperationDefinition')) {
       return (node: any);
     }
   },

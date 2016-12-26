@@ -11,6 +11,9 @@
 
 'use strict';
 
+jest.mock('warning');
+jest.useFakeTimers();
+
 require('configureForRelayOSS');
 
 const GraphQLRange = require('GraphQLRange');
@@ -126,7 +129,7 @@ describe('restoreRelayCacheData', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
     jest.clearAllTimers();
     jasmine.addMatchers(RelayTestUtils.matchers);
 

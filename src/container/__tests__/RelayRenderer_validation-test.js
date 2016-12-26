@@ -33,7 +33,7 @@ describe('RelayRenderer.validation', () => {
   const {error} = console;
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
     jasmine.addMatchers(RelayTestUtils.matchers);
 
     MockComponent = React.createClass({render: () => <div />});
@@ -84,8 +84,8 @@ describe('RelayRenderer.validation', () => {
     expect(() => ShallowRenderer.render(
       <RelayRenderer Container={MockContainer} environment={environment} />
     )).toThrowError(
-      'Warning: Failed prop type: Required prop `queryConfig` was not ' +
-      'specified in `RelayRenderer`.'
+      'Warning: Failed prop type: The prop `queryConfig` is marked as ' +
+      'required in `RelayRenderer`, but its value is `undefined`.'
     );
 
     expect(() => ShallowRenderer.render(
@@ -95,8 +95,8 @@ describe('RelayRenderer.validation', () => {
         environment={environment}
       />
     )).toThrowError(
-      'Warning: Failed prop type: Required prop `queryConfig.name` was not ' +
-      'specified in `RelayRenderer`.'
+      'Warning: Failed prop type: The prop `queryConfig.name` is marked as ' +
+      'required in `RelayRenderer`, but its value is `undefined`.'
     );
   });
 

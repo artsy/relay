@@ -11,6 +11,8 @@
 
 'use strict';
 
+jest.mock('warning');
+
 require('configureForRelayOSS');
 
 const GraphQLStoreQueryResolver = require('GraphQLStoreQueryResolver');
@@ -27,7 +29,7 @@ describe('RelayContainer', function() {
   let mockRender;
 
   beforeEach(function() {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     MockComponent = React.createClass({
       render: jest.fn(() => <div />),

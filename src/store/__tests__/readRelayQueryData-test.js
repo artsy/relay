@@ -11,6 +11,8 @@
 
 'use strict';
 
+jest.mock('warning');
+
 require('configureForRelayOSS');
 
 const GraphQLRange = require('GraphQLRange');
@@ -51,7 +53,7 @@ describe('readRelayQueryData', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     RelayRecordStore = require('RelayRecordStore');
 

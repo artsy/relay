@@ -13,6 +13,7 @@
 
 require('configureForRelayOSS');
 
+jest.useFakeTimers();
 jest
   .unmock('GraphQLRange')
   .unmock('GraphQLSegment')
@@ -47,7 +48,7 @@ describe('GraphQLStoreQueryResolver', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     storeData = new RelayStoreData();
     changeEmitter = storeData.getChangeEmitter();

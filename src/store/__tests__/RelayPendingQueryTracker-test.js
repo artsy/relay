@@ -13,6 +13,7 @@
 
 require('configureForRelayOSS');
 
+jest.useFakeTimers();
 jest
   .unmock('RelayPendingQueryTracker')
   .unmock('RelayTaskQueue');
@@ -34,7 +35,7 @@ describe('RelayPendingQueryTracker', () => {
   const {getNode} = RelayTestUtils;
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     const storeData = new RelayStoreData();
     fetchRelayQuery = storeData.getNetworkLayer().fetchRelayQuery;

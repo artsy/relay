@@ -12,24 +12,36 @@
 
 'use strict';
 
-import type {ConcreteFragment} from 'ConcreteQuery';
 const ErrorUtils = require('ErrorUtils');
 const React = require('React');
 const RelayContainerComparators = require('RelayContainerComparators');
 const RelayContainerProxy = require('RelayContainerProxy');
-import type RelayEnvironment from 'RelayEnvironment';
-import type {FragmentResolver} from 'RelayEnvironment';
 const RelayFragmentPointer = require('RelayFragmentPointer');
 const RelayFragmentReference = require('RelayFragmentReference');
-import type {DataID, RelayQuerySet} from 'RelayInternalTypes';
 const RelayMetaRoute = require('RelayMetaRoute');
 const RelayMutationTransaction = require('RelayMutationTransaction');
 const RelayProfiler = require('RelayProfiler');
 const RelayPropTypes = require('RelayPropTypes');
 const RelayQuery = require('RelayQuery');
-import type {RelayQueryConfigInterface} from 'RelayQueryConfig';
 const RelayRecord = require('RelayRecord');
 const RelayRecordStatusMap = require('RelayRecordStatusMap');
+
+const areEqual = require('areEqual');
+const buildRQL = require('buildRQL');
+const filterObject = require('filterObject');
+const forEachObject = require('forEachObject');
+const invariant = require('invariant');
+const isLegacyRelayContext = require('isLegacyRelayContext');
+const relayUnstableBatchedUpdates = require('relayUnstableBatchedUpdates');
+const shallowEqual = require('shallowEqual');
+const warning = require('warning');
+
+const {getComponentName, getReactComponent} = require('RelayContainerUtils');
+
+import type {ConcreteFragment} from 'ConcreteQuery';
+import type {FragmentResolver, LegacyRelayContext} from 'RelayEnvironment';
+import type {DataID, RelayQuerySet} from 'RelayInternalTypes';
+import type {RelayQueryConfigInterface} from 'RelayQueryConfig';
 import type {
   Abortable,
   ComponentReadyStateChangeCallback,
@@ -37,28 +49,18 @@ import type {
   RelayProp,
   Variables,
 } from 'RelayTypes';
-
-const areEqual = require('areEqual');
-const buildRQL = require('buildRQL');
 import type {RelayQLFragmentBuilder} from 'buildRQL';
-const filterObject = require('filterObject');
-const forEachObject = require('forEachObject');
-const {getComponentName, getReactComponent} = require('RelayContainerUtils');
-const invariant = require('invariant');
-const isRelayEnvironment = require('isRelayEnvironment');
-const relayUnstableBatchedUpdates = require('relayUnstableBatchedUpdates');
-const shallowEqual = require('shallowEqual');
-const warning = require('warning');
 
 type FragmentPointer = {
   fragment: RelayQuery.Fragment,
   dataIDs: DataID | Array<DataID>
 };
 type RelayContainerContext = {
-  relay: RelayEnvironment,
+  relay: LegacyRelayContext,
   route: RelayQueryConfigInterface,
   useFakeData: boolean,
 };
+
 export type RelayContainerSpec = {
   fragments: {
     [propName: string]: RelayQLFragmentBuilder
@@ -73,7 +75,7 @@ export type RelayContainerSpec = {
 export type RelayLazyContainer = Function;
 
 const containerContextTypes = {
-  relay: RelayPropTypes.Environment,
+  relay: RelayPropTypes.LegacyRelay,
   route: RelayPropTypes.QueryConfig.isRequired,
   useFakeData: React.PropTypes.bool,
 };
@@ -126,7 +128,7 @@ function createContainerComponent(
 
       const {relay, route} = context;
       invariant(
-        isRelayEnvironment(relay),
+        isLegacyRelayContext(relay),
         'RelayContainer: `%s` was rendered with invalid Relay context `%s`. ' +
         'Make sure the `relay` property on the React context conforms to the ' +
         '`RelayEnvironment` interface.',
@@ -152,8 +154,8 @@ function createContainerComponent(
         queryData: {},
         rawVariables: {},
         relayProp: {
-          applyUpdate: this.context.relay.applyUpdate,
-          commitUpdate: this.context.relay.commitUpdate,
+          applyUpdate: this.context.relay.environment.applyUpdate,
+          commitUpdate: this.context.relay.environment.commitUpdate,
           forceFetch: this.forceFetch.bind(this),
           getPendingTransactions: this.getPendingTransactions.bind(this),
           hasFragmentData: this.hasFragmentData.bind(this),
@@ -203,7 +205,7 @@ function createContainerComponent(
     } {
       const fragmentPointers = {};
       const querySet = {};
-      const storeData = this.context.relay.getStoreData();
+      const storeData = this.context.relay.environment.getStoreData();
       fragmentNames.forEach(fragmentName => {
         const fragment =
           getFragment(fragmentName, this.context.route, variables);
@@ -221,8 +223,10 @@ function createContainerComponent(
             fragmentName
           );
           const dataIDs = [];
-          // $FlowFixMe(>=0.31.0)
           queryData.forEach((data, ii) => {
+            /* $FlowFixMe(>=0.36.0) Flow error detected
+             * during the deploy of Flow v0.36.0. To see the error, remove this
+             * comment and run Flow */
             const dataID = RelayRecord.getDataIDForObject(data);
             if (dataID) {
               querySet[fragmentName + ii] =
@@ -296,7 +300,7 @@ function createContainerComponent(
           // and `fragmentPointers` will be empty, and `nextVariables` will be
           // equal to `lastVariables`.
           this._fragmentPointers = fragmentPointers;
-          this._updateFragmentResolvers(this.context.relay);
+          this._updateFragmentResolvers(this.context.relay.environment);
           const queryData = this._getQueryData(this.props);
           partialState = {
             queryData,
@@ -327,6 +331,7 @@ function createContainerComponent(
             });
             if (callback) {
               callback.call(
+                // eslint-disable-next-line react/no-string-refs
                 this.refs.component || null,
                 {...readyState, mounted}
               );
@@ -345,8 +350,8 @@ function createContainerComponent(
       const current = {
         rawVariables,
         request: forceFetch ?
-          this.context.relay.forceFetch(querySet, onReadyStateChange) :
-          this.context.relay.primeCache(querySet, onReadyStateChange),
+          this.context.relay.environment.forceFetch(querySet, onReadyStateChange) :
+          this.context.relay.environment.primeCache(querySet, onReadyStateChange),
       };
       this.pending = current;
     }
@@ -363,7 +368,7 @@ function createContainerComponent(
         'RelayContainer.hasOptimisticUpdate(): Expected a record in `%s`.',
         componentName
       );
-      return this.context.relay.getStoreData().hasOptimisticUpdate(dataID);
+      return this.context.relay.environment.getStoreData().hasOptimisticUpdate(dataID);
     }
 
     /**
@@ -376,7 +381,7 @@ function createContainerComponent(
         'RelayContainer.getPendingTransactions(): Expected a record in `%s`.',
         componentName
       );
-      const storeData = this.context.relay.getStoreData();
+      const storeData = this.context.relay.environment.getStoreData();
       const mutationIDs = storeData.getClientMutationIDs(dataID);
       if (!mutationIDs) {
         return null;
@@ -415,7 +420,7 @@ function createContainerComponent(
         'fragment. Ensure that there are no failing `if` or `unless` ' +
         'conditions.'
       );
-      const storeData = this.context.relay.getStoreData();
+      const storeData = this.context.relay.environment.getStoreData();
       return storeData.getCachedStore().hasFragmentData(
         dataID,
         fragment.getCompositeHash()
@@ -506,7 +511,7 @@ function createContainerComponent(
         nextVariables,
         prevVariables
       );
-      this._updateFragmentResolvers(context.relay);
+      this._updateFragmentResolvers(context.relay.environment);
       return {
         queryData: this._getQueryData(props),
         rawVariables,
@@ -792,13 +797,13 @@ function createContainerComponent(
       );
     }
 
-    render(): React$Element<any> {
+    render(): React.Element<*> {
       if (ComponentClass) {
         return (
           <ComponentClass
             {...this.props}
             {...this.state.queryData}
-            ref={'component'}
+            ref={'component'} // eslint-disable-line react/no-string-refs
             relay={this.state.relayProp}
           />
         );

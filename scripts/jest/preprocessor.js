@@ -6,6 +6,7 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  */
+'use strict';
 
 const assign = require('object-assign');
 const babel = require('babel-core');
@@ -23,9 +24,10 @@ const babelOptions = getBabelOptions({
   env: 'test',
   moduleMap: {
     'React': 'react',
-    'reactComponentExpect': 'react/lib/reactComponentExpect',
+    'reactComponentExpect': 'react-dom/lib/reactComponentExpect',
     'ReactDOM': 'react-dom',
     'ReactDOMServer': 'react-dom/server',
+    'ReactTestRenderer': 'react-test-renderer',
     'ReactTestUtils': 'react-addons-test-utils',
     'StaticContainer.react': 'react-static-container',
   },

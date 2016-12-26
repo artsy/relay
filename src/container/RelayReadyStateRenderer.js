@@ -13,17 +13,18 @@
 'use strict';
 
 const React = require('React');
-import type {RelayEnvironmentInterface} from 'RelayEnvironment';
 const RelayFragmentPointer = require('RelayFragmentPointer');
-import type {RelayQuerySet} from 'RelayInternalTypes';
 const RelayPropTypes = require('RelayPropTypes');
-import type RelayQuery from 'RelayQuery';
-import type {RelayQueryConfigInterface} from 'RelayQueryConfig';
-import type {ReadyState, RelayContainer} from 'RelayTypes';
 const StaticContainer = require('StaticContainer.react');
 
 const getRelayQueries = require('getRelayQueries');
 const mapObject = require('mapObject');
+
+import type {LegacyRelayContext, RelayEnvironmentInterface} from 'RelayEnvironment';
+import type {RelayQuerySet} from 'RelayInternalTypes';
+import type RelayQuery from 'RelayQuery';
+import type {RelayQueryConfigInterface} from 'RelayQueryConfig';
+import type {ReadyState, ReadyStateEvent, RelayContainer} from 'RelayTypes';
 
 type Props = {
   Container: RelayContainer,
@@ -33,20 +34,21 @@ type Props = {
   render?: ?RelayRenderCallback,
   retry: RelayRetryCallback,
 };
-
 type RelayContainerProps = {
   [propName: string]: mixed;
 };
 type RelayContainerPropsFactory = RelayContainerPropsFactory;
-export type RelayRenderCallback =
-  (renderArgs: RelayRenderArgs) => ?React$Element<any>;
 type RelayRenderArgs = {
   done: boolean,
   error: ?Error,
+  events: Array<ReadyStateEvent>,
   props: ?RelayContainerProps,
   retry: ?RelayRetryCallback,
   stale: boolean,
 };
+
+export type RelayRenderCallback =
+  (renderArgs: RelayRenderArgs) => ?React.Element<*>;
 export type RelayRetryCallback = () => void;
 
 /**
@@ -62,10 +64,11 @@ export type RelayRetryCallback = () => void;
  */
 class RelayReadyStateRenderer extends React.Component {
   static childContextTypes = {
-    relay: RelayPropTypes.Environment,
+    relay: RelayPropTypes.LegacyRelay,
     route: RelayPropTypes.QueryConfig.isRequired,
   };
 
+  _relay: LegacyRelayContext;
   props: Props;
   state: {
     getContainerProps: RelayContainerPropsFactory,
@@ -73,6 +76,10 @@ class RelayReadyStateRenderer extends React.Component {
 
   constructor(props: Props, context: any) {
     super(props, context);
+    this._relay = {
+      environment: props.environment,
+      variables: props.queryConfig.params,
+    };
     this.state = {
       getContainerProps: createContainerPropsFactory(),
     };
@@ -80,12 +87,56 @@ class RelayReadyStateRenderer extends React.Component {
 
   getChildContext(): Object {
     return {
-      relay: this.props.environment,
+      relay: this._relay,
       route: this.props.queryConfig,
     };
   }
 
-  render(): ?React$Element<any> {
+  componentWillReceiveProps(nextProps: Props): void {
+    if (
+      this.props.environment !== nextProps.environment ||
+      this.props.queryConfig !== nextProps.queryConfig
+    ) {
+      this._relay = {
+        environment: nextProps.environment,
+        variables: nextProps.queryConfig.params,
+      };
+    }
+  }
+
+  /**
+   * Avoid updating when we have fetched data but are still not ready.
+   */
+  shouldComponentUpdate(nextProps: Props): boolean {
+    const prevProps = this.props;
+    if (
+      prevProps.Container !== nextProps.Container ||
+      prevProps.environment !== nextProps.environment ||
+      prevProps.queryConfig !== nextProps.queryConfig ||
+      prevProps.render !== nextProps.render ||
+      prevProps.retry !== nextProps.retry
+    ) {
+      return true;
+    }
+    const prevReadyState = prevProps.readyState;
+    const nextReadyState = nextProps.readyState;
+    if (prevReadyState == null ||
+        nextReadyState == null) {
+      return true;
+    }
+    if (
+      prevReadyState.aborted !== nextReadyState.aborted ||
+      prevReadyState.done !== nextReadyState.done ||
+      prevReadyState.error !== nextReadyState.error ||
+      prevReadyState.ready !== nextReadyState.ready ||
+      prevReadyState.stale !== nextReadyState.stale
+    ) {
+      return true;
+    }
+    return nextReadyState.ready;
+  }
+
+  render(): ?React.Element<*> {
     let children;
     let shouldUpdate = false;
 

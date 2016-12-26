@@ -13,7 +13,10 @@
 
 require('configureForRelayOSS');
 
-jest.autoMockOff();
+jest
+  .useFakeTimers()
+  .disableAutomock()
+  .mock('relayUnstableBatchedUpdates');
 
 const Relay = require('Relay');
 const RelayEnvironment = require('RelayEnvironment');
@@ -27,7 +30,7 @@ describe('RelayMutation', () => {
   let query;
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     environment = new RelayEnvironment();
     storeData = environment.getStoreData();
@@ -238,4 +241,3 @@ describe('RelayMutation', () => {
     });
   });
 });
-

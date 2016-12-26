@@ -40,8 +40,10 @@ The `babel-relay-plugin` must run before the `react-native` Babel preset. Thus, 
 ```javascript
 {
   "passPerPreset": true,
+  "plugins": [
+    "./plugins/babelRelayPlugin"
+  ],
   "presets": [
-    {"plugins": ["./plugins/babelRelayPlugin"]},
     "react-native"
   ]
 }
@@ -125,7 +127,7 @@ const schemaPath = path.join(__dirname, 'schema');
 const SERVER = 'http://example.com/graphql';
 
 // Save JSON of full schema introspection for Babel Relay Plugin to use
-fetch(`${SERVER}`, {
+fetch(SERVER, {
   method: 'POST',
   headers: {
     'Accept': 'application/json',
@@ -164,16 +166,15 @@ babel.transform(source, {
       suppressWarnings: false,
       // Can add a custom validator.
       // Supplying one overrides the default one, skipping the default rules.
-      validator: (GraphQL) => {
-        return (schema, ast) => {
+      validator: {
+        validate(schema, ast) {
           // Return an array of `Error` instances.
           return [];
-        };
+        },
       },
-    }), {
-    // Will throw an error when it validates the queries at build time.
-    enforceSchema: true,
-    }],
+      // Will throw an error when it validates the queries at build time.
+      enforceSchema: true,
+    })],
   ],
 });
 ```

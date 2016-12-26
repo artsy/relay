@@ -13,11 +13,13 @@
 'use strict';
 
 const Deferred = require('Deferred');
-import type {PrintedQuery} from 'RelayInternalTypes';
-import type RelayQuery from 'RelayQuery';
-import type {QueryResult, Variables} from 'RelayTypes';
+const RelayQuery = require('RelayQuery');
 
+const printRelayOSSQuery = require('printRelayOSSQuery');
 const printRelayQuery = require('printRelayQuery');
+
+import type {PrintedQuery} from 'RelayInternalTypes';
+import type {QueryResult, Variables} from 'RelayTypes';
 
 /**
  * @internal
@@ -26,9 +28,9 @@ const printRelayQuery = require('printRelayQuery');
  */
 class RelayQueryRequest extends Deferred<QueryResult, Error> {
   _printedQuery: ?PrintedQuery;
-  _query: RelayQuery.Root;
+  _query: RelayQuery.Root | RelayQuery.OSSQuery;
 
-  constructor(query: RelayQuery.Root) {
+  constructor(query: RelayQuery.Root | RelayQuery.OSSQuery) {
     super();
     this._printedQuery = null;
     this._query = query;
@@ -40,7 +42,8 @@ class RelayQueryRequest extends Deferred<QueryResult, Error> {
    * Gets a string name used to refer to this request for printing debug output.
    */
   getDebugName(): string {
-    return this._query.getName();
+    const name = this._query.getName();
+    return this._query.isDeferred() ? name + ' (DEFERRED)' : name;
   }
 
   /**
@@ -54,6 +57,17 @@ class RelayQueryRequest extends Deferred<QueryResult, Error> {
     return this._query.getID();
   }
 
+  _getPrintedQuery(): PrintedQuery {
+    let printedQuery = this._printedQuery;
+    if (printedQuery == null) {
+      printedQuery = this._query instanceof RelayQuery.OSSQuery ?
+        printRelayOSSQuery(this._query) :
+        printRelayQuery(this._query);
+      this._printedQuery = printedQuery;
+    }
+    return printedQuery;
+  }
+
   /**
    * @public
    *
@@ -61,12 +75,7 @@ class RelayQueryRequest extends Deferred<QueryResult, Error> {
    * and sent in the GraphQL request.
    */
   getVariables(): Variables {
-    let printedQuery = this._printedQuery;
-    if (!printedQuery) {
-      printedQuery = printRelayQuery(this._query);
-      this._printedQuery = printedQuery;
-    }
-    return printedQuery.variables;
+    return this._getPrintedQuery().variables;
   }
 
   /**
@@ -75,19 +84,14 @@ class RelayQueryRequest extends Deferred<QueryResult, Error> {
    * Gets a string representation of the GraphQL query.
    */
   getQueryString(): string {
-    let printedQuery = this._printedQuery;
-    if (!printedQuery) {
-      printedQuery = printRelayQuery(this._query);
-      this._printedQuery = printedQuery;
-    }
-    return printedQuery.text;
+    return this._getPrintedQuery().text;
   }
 
   /**
    * @public
    * @unstable
    */
-  getQuery(): RelayQuery.Root {
+  getQuery(): RelayQuery.Root | RelayQuery.OSSQuery {
     return this._query;
   }
 }

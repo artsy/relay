@@ -11,6 +11,7 @@
 
 'use strict';
 
+jest.useFakeTimers();
 jest.unmock('RelayTaskQueue');
 
 const RelayTaskQueue = require('RelayTaskQueue');
@@ -20,7 +21,7 @@ const resolveImmediate = require('resolveImmediate');
 
 describe('RelayTaskQueue', () => {
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
     jasmine.addMatchers(RelayTestUtils.matchers);
   });
 

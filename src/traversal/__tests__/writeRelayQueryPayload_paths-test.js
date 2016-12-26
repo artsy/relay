@@ -13,6 +13,7 @@
 
 require('configureForRelayOSS');
 
+jest.mock('warning');
 jest
   .unmock('GraphQLRange')
   .unmock('GraphQLSegment');
@@ -48,7 +49,7 @@ describe('writePayload()', () => {
   }
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     RelayRecordStore = require('RelayRecordStore');
     RelayRecordWriter = require('RelayRecordWriter');

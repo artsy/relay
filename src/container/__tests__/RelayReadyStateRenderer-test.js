@@ -12,9 +12,9 @@
 'use strict';
 
 const React = require('React');
-const Relay = require('Relay');
 const ReactDOM = require('ReactDOM');
 const ReactTestUtils = require('ReactTestUtils');
+const Relay = require('Relay');
 const RelayEnvironment = require('RelayEnvironment');
 const RelayQueryConfig = require('RelayQueryConfig');
 const RelayReadyStateRenderer = require('RelayReadyStateRenderer');
@@ -57,8 +57,9 @@ describe('RelayReadyStateRenderer', () => {
         !element.type.name) {
       return jasmine.pp(element);
     }
-    const ppProps = Object.entries(element.props)
-      .map(([key, value]) => {
+    const ppProps = Object.keys(element.props)
+      .map(key => {
+        const value = element.props[key];
         const ppValue = jasmine.pp(value);
         return ` ${key}={${ppValue.length > 120 ? '...' : ppValue}}`;
       })
@@ -70,7 +71,7 @@ describe('RelayReadyStateRenderer', () => {
   let defaultReadyState;
 
   beforeEach(() => {
-    jest.resetModuleRegistry();
+    jest.resetModules();
 
     const TestQueryConfig = RelayQueryConfig.genMock({
       routeName: 'TestQueryConfig',
@@ -535,7 +536,7 @@ describe('RelayReadyStateRenderer', () => {
     it('sets environment and query config on the React context', () => {
       class TestComponent extends React.Component {
         static contextTypes = {
-          relay: Relay.PropTypes.Environment,
+          relay: Relay.PropTypes.Relay,
           route: Relay.PropTypes.QueryConfig.isRequired,
         };
         render() {
@@ -555,7 +556,10 @@ describe('RelayReadyStateRenderer', () => {
         container
       );
       expect(onRenderContext).toBeCalledWith({
-        relay: defaultProps.environment,
+        relay: {
+          environment: defaultProps.environment,
+          variables: {},
+        },
         route: defaultProps.queryConfig,
       });
     });
