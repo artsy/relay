@@ -740,6 +740,7 @@ module.exports = function(t: any, options: PrinterOptions): Function {
   ): boolean {
     return (
       node.getType().mayImplement('Node') &&
+      node.getSelections().length > 0 &&
       !node
         .getSelections()
         .some(
