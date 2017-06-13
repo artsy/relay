@@ -75,25 +75,25 @@ type TransformModule = { default: TransformFactory }
 
 function getParser(transformModules: Array<string> = []) {
   return (baseDir: string): FileParser => {
-    const transformer = getTransformer(baseDir, transformModules)
+    const transformer = getTransformer(baseDir, transformModules);
     return new FileParser({
       baseDir,
       parse: (filename: string) => {
         const text = fs.readFileSync(filename, 'utf8');
-        return parseFile(filename, transformer(filename, text))
+        return parseFile(filename, transformer(filename, text));
       },
     });
-  }
+  };
 }
 
 function getTransformer(baseDir: string, transformModules: Array<string> = []) {
-  let transformer = (filename: string, text: string) => text
+  let transformer = (filename: string, text: string) => text;
   if (transformModules.length) {
     transformModules.forEach(moduleName => {
-      let moduleImpl: TransformFactory
+      let moduleImpl: TransformModule;
       try {
         // $FlowFixMe flow doesn't know about __non_webpack_require__
-        moduleImpl = (__non_webpack_require__(moduleName): TransformFactory)
+        moduleImpl = (__non_webpack_require__(moduleName): TransformModule); // eslint-disable-line no-undef
         invariant(
           moduleImpl.default,
           'Transformer module "' + moduleName + '" should have a default export'
@@ -103,13 +103,13 @@ function getTransformer(baseDir: string, transformModules: Array<string> = []) {
           'Can not resolve transformer module "' + moduleName + '"'
         );
       }
-      const transformerImpl = moduleImpl.default(baseDir)
-      const prevTransformer = transformer
-      transformer = (filename: string, text: string) => transformerImpl(filename, prevTransformer(filename, text))
-    })
+      const transformerImpl = moduleImpl.default(baseDir);
+      const prevTransformer = transformer;
+      transformer = (filename: string, text: string) => transformerImpl(filename, prevTransformer(filename, text));
+    });
   }
 
-  return transformer
+  return transformer;
 }
 
 function getFileFilter(baseDir: string): FileFilter {
