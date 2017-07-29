@@ -20,10 +20,11 @@ const {
   assertAbstractType,
   assertCompositeType,
   assertLeafType,
+  GraphQLNonNull
 } = require('graphql');
 
 import type {InlineFragment, LinkedField, Node, Selection} from 'RelayIR';
-import type {GraphQLCompositeType, GraphQLLeafType, GraphQLType} from 'graphql';
+import type {GraphQLCompositeType, GraphQLLeafType, GraphQLType } from 'graphql';
 const {
   canHaveSelections,
   getRawType,
@@ -159,6 +160,22 @@ function generateIDSelections(
         generatedSelections.push(buildIdFragment(possibleType, idType));
       }
     });
+  } else {
+    const nodeInterface = unmodifiedType.getInterfaces().find(thingie => thingie.toString() === NODE_TYPE)
+    if (nodeInterface) {
+      const fields = nodeInterface.getFields()
+      Object.keys(fields).forEach(fieldName => {
+        let fieldType = fields[fieldName].type;
+        if (fieldType instanceof GraphQLNonNull) {
+          fieldType = fieldType.ofType;
+          const idType = assertLeafType(context.schema.getType(ID_TYPE));
+          if (fieldType === idType) {
+            const nodeType = assertCompositeType(context.schema.getType(NODE_TYPE));
+            generatedSelections.push(buildIdFragment(nodeType, idType, fieldName));
+          }
+        }
+      })
+    }
   }
   return generatedSelections;
 }
@@ -169,6 +186,7 @@ function generateIDSelections(
 function buildIdFragment(
   fragmentType: GraphQLCompositeType,
   idType: GraphQLLeafType,
+  fieldName: ?string
 ): InlineFragment {
   return {
     kind: 'InlineFragment',
@@ -183,7 +201,7 @@ function buildIdFragment(
         directives: [],
         handles: null,
         metadata: null,
-        name: ID,
+        name: fieldName || ID,
         type: idType,
       },
     ],

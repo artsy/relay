@@ -46,7 +46,7 @@ describe('RelayGenerateRequisiteFieldsTransform', () => {
     });
   });
 
-  it('inflects DataID field from Node interface', () => {
+  it.only('inflects DataID field from Node interface', () => {
     const schema = buildSchema(`
       schema {
         query: Query
@@ -82,11 +82,13 @@ describe('RelayGenerateRequisiteFieldsTransform', () => {
     nextContext.documents().map(doc => {
       documents.push(RelayPrinter.print(doc));
     });
-    expect(documents.join('\n')).toEqual(`
+    expect(documents.join('\n').trim()).toEqual(`
       query ArtistsQuery {
         artists {
-          __id
           name
+          ... on Node {
+            __id
+          }
         }
       }
     `.replace(/^\s{6}/gm, '').trim())
