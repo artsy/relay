@@ -46,7 +46,7 @@ describe('RelayGenerateRequisiteFieldsTransform', () => {
     });
   });
 
-  it.only('inflects DataID field from Node interface', () => {
+  it('inflects DataID field from Node interface', () => {
     const schema = buildSchema(`
       schema {
         query: Query
@@ -75,7 +75,7 @@ describe('RelayGenerateRequisiteFieldsTransform', () => {
     `)
     const context = ast.reduce(
       (ctx, node) => ctx.add(node),
-      new RelayCompilerContext(RelayTestSchema)
+      new RelayCompilerContext(schema)
     );
     const nextContext = RelayGenerateRequisiteFieldsTransform.transform(context);
     const documents = [];

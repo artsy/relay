@@ -21,6 +21,8 @@ const {createUserError} = require('./RelayCompilerUserError');
 import type {Fragment, Root} from './RelayIR';
 import type {GraphQLSchema} from 'graphql';
 
+import { GraphQLNonNull } from 'graphql';
+
 const {
   List: ImmutableList,
   OrderedMap: ImmutableOrderedMap,
@@ -150,6 +152,30 @@ class RelayCompilerContext {
     const context = new RelayCompilerContext(this.schema);
     context._documents = documents;
     return context;
+  }
+
+  // TODO
+  // * cache value
+  // * see if it has to be boxed as non-null or if it can be a null type too
+  // * figure out where the NODE_TYPE and ID_TYPE defs should really live
+  getNodeIDFieldName(): string {
+    const ID_TYPE = 'ID';
+    const NODE_TYPE = 'Node';
+
+    const nodeInterface = this.schema.getType(NODE_TYPE);
+    if (nodeInterface) {
+      const fields = nodeInterface.getFields()
+      return Object.keys(fields).find(fieldName => {
+        let fieldType = fields[fieldName].type;
+        if (fieldType instanceof GraphQLNonNull) {
+          fieldType = fieldType.ofType;
+          const idType = this.schema.getType(ID_TYPE);
+          return fieldType === idType;
+        }
+        return null;
+      });
+    }
+    return null;
   }
 }
 

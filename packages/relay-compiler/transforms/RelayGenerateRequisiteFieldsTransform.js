@@ -19,8 +19,7 @@ const RelayCompilerContext = require('RelayCompilerContext');
 const {
   assertAbstractType,
   assertCompositeType,
-  assertLeafType,
-  GraphQLNonNull
+  assertLeafType
 } = require('graphql');
 
 import type {InlineFragment, LinkedField, Node, Selection} from 'RelayIR';
@@ -116,6 +115,8 @@ function transformField(
  *   fragment if *any* concrete type implements Node. Then generate a
  *   `... on PossibleType { id }` for every concrete type that does *not*
  *   implement `Node`
+ * - If the field type implements the Node interface, return a selection of the
+ *   one field in the Node interface that is of type `ID`.
  */
 function generateIDSelections(
   context: RelayCompilerContext,
@@ -161,20 +162,10 @@ function generateIDSelections(
       }
     });
   } else {
-    const nodeInterface = unmodifiedType.getInterfaces().find(thingie => thingie.toString() === NODE_TYPE)
-    if (nodeInterface) {
-      const fields = nodeInterface.getFields()
-      Object.keys(fields).forEach(fieldName => {
-        let fieldType = fields[fieldName].type;
-        if (fieldType instanceof GraphQLNonNull) {
-          fieldType = fieldType.ofType;
-          const idType = assertLeafType(context.schema.getType(ID_TYPE));
-          if (fieldType === idType) {
-            const nodeType = assertCompositeType(context.schema.getType(NODE_TYPE));
-            generatedSelections.push(buildIdFragment(nodeType, idType, fieldName));
-          }
-        }
-      })
+    const nodeType = unmodifiedType.getInterfaces().find(type => type.toString() === NODE_TYPE)
+    if (nodeType) {
+      const idType = context.schema.getType(ID_TYPE);
+      generatedSelections.push(buildIdFragment(nodeType, idType, context.getNodeIDFieldName()));
     }
   }
   return generatedSelections;
