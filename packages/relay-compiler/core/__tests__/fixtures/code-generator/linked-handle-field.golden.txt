@@ -27,7 +27,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": "friends{\"first\":10}"
+      "storageKey": "friends{\"first\":10}",
+      "idField": "id"
     },
     {
       "kind": "LinkedHandle",

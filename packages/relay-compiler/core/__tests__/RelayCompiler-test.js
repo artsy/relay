@@ -15,7 +15,7 @@
 require('configureForRelayOSS');
 
 const {transformASTSchema} = require('ASTConvert');
-const {generate} = require('RelayCodeGenerator');
+const RelayCodeGenerator = require('RelayCodeGenerator');
 const RelayCompiler = require('RelayCompiler');
 const RelayCompilerContext = require('RelayCompilerContext');
 const RelayIRTransforms = require('RelayIRTransforms');
@@ -36,11 +36,13 @@ describe('RelayCompiler', () => {
         RelayTestSchema,
         RelayIRTransforms.schemaExtensions,
       );
+      const context = new RelayCompilerContext(relaySchema);
+      const codeGenerator = new RelayCodeGenerator(context.getNodeIDFieldName());
       const compiler = new RelayCompiler(
         RelayTestSchema,
-        new RelayCompilerContext(relaySchema),
+        context,
         RelayIRTransforms,
-        generate,
+        codeGenerator.generate.bind(codeGenerator),
       );
       compiler.addDefinitions(parseGraphQLText(relaySchema, text).definitions);
       return Array.from(compiler.compile().values())

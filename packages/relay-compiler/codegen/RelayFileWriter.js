@@ -27,7 +27,7 @@ const writeLegacyFlowFile = require('./writeLegacyFlowFile');
 const writeRelayGeneratedFile = require('./writeRelayGeneratedFile');
 
 const {isOperationDefinitionAST} = require('GraphQLSchemaUtils');
-const {generate} = require('RelayCodeGenerator');
+const RelayCodeGenerator = require('RelayCodeGenerator');
 const {Map: ImmutableMap} = require('immutable');
 
 import type {RelayGeneratedNode} from 'RelayCodeGenerator';
@@ -144,11 +144,12 @@ class RelayFileWriter implements FileWriterInterface {
     );
 
     const compilerContext = new RelayCompilerContext(extendedSchema);
+    const codeGenerator = new RelayCodeGenerator(compilerContext.getNodeIDFieldName());
     const compiler = new RelayCompiler(
       this._baseSchema,
       compilerContext,
       this._config.compilerTransforms,
-      generate,
+      codeGenerator.generate.bind(codeGenerator),
     );
 
     const getGeneratedDirectory = definitionName => {

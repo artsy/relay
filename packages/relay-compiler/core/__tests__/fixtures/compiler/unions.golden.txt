@@ -40,7 +40,8 @@
                     "storageKey": null
                   }
                 ],
-                "storageKey": null
+                "storageKey": null,
+                "idField": "id"
               }
             ]
           },
@@ -58,7 +59,8 @@
             ]
           }
         ],
-        "storageKey": null
+        "storageKey": null,
+        "idField": "id"
       }
     ],
     "type": "Query"
@@ -115,7 +117,8 @@
                     "storageKey": null
                   }
                 ],
-                "storageKey": null
+                "storageKey": null,
+                "idField": "id"
               }
             ]
           },
@@ -133,7 +136,8 @@
             ]
           }
         ],
-        "storageKey": null
+        "storageKey": null,
+        "idField": "id"
       }
     ]
   }

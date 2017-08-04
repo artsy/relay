@@ -77,7 +77,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": null
+      "storageKey": null,
+      "idField": "id"
     },
     {
       "kind": "LinkedField",
@@ -116,7 +117,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": "profilePicture{\"size\":32}"
+      "storageKey": "profilePicture{\"size\":32}",
+      "idField": "id"
     },
     {
       "kind": "LinkedField",
@@ -155,7 +157,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": null
+      "storageKey": null,
+      "idField": "id"
     },
     {
       "kind": "LinkedField",
@@ -180,7 +183,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": null
+      "storageKey": null,
+      "idField": "id"
     },
     {
       "kind": "Condition",
@@ -281,7 +285,8 @@
             ]
           }
         ],
-        "storageKey": null
+        "storageKey": null,
+        "idField": "id"
       }
     ],
     "type": "Query"
@@ -383,7 +388,8 @@
                         "storageKey": null
                       }
                     ],
-                    "storageKey": "friends{\"first\":5}"
+                    "storageKey": "friends{\"first\":5}",
+                    "idField": "id"
                   },
                   {
                     "kind": "LinkedField",
@@ -422,7 +428,8 @@
                         "storageKey": null
                       }
                     ],
-                    "storageKey": "profilePicture{\"size\":32}"
+                    "storageKey": "profilePicture{\"size\":32}",
+                    "idField": "id"
                   },
                   {
                     "kind": "LinkedField",
@@ -461,7 +468,8 @@
                         "storageKey": null
                       }
                     ],
-                    "storageKey": null
+                    "storageKey": null,
+                    "idField": "id"
                   },
                   {
                     "kind": "LinkedField",
@@ -486,14 +494,16 @@
                         "storageKey": null
                       }
                     ],
-                    "storageKey": null
+                    "storageKey": null,
+                    "idField": "id"
                   }
                 ]
               }
             ]
           }
         ],
-        "storageKey": null
+        "storageKey": null,
+        "idField": "id"
       }
     ]
   }

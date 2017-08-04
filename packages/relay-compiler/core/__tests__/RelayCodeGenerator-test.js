@@ -31,9 +31,10 @@ describe('RelayCodeGenerator', () => {
       const context = new RelayCompilerContext(RelayTestSchema).addAll(
         definitions,
       );
+      const codeGenerator = new RelayCodeGenerator(context.getNodeIDFieldName());
       return context
         .documents()
-        .map(doc => prettyStringify(RelayCodeGenerator.generate(doc)))
+        .map(doc => prettyStringify(codeGenerator.generate(doc)))
         .join('\n\n');
     });
   });

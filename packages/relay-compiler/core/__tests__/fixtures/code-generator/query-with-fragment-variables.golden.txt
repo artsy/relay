@@ -72,7 +72,8 @@
           ]
         }
       ],
-      "storageKey": null
+      "storageKey": null,
+      "idField": "id"
     }
   ]
 }
@@ -133,13 +134,16 @@
                   ]
                 }
               ],
-              "storageKey": null
+              "storageKey": null,
+              "idField": "id"
             }
           ],
-          "storageKey": null
+          "storageKey": null,
+          "idField": "id"
         }
       ],
-      "storageKey": "friends{\"first\":10}"
+      "storageKey": "friends{\"first\":10}",
+      "idField": "id"
     }
   ],
   "type": "User"
@@ -181,7 +185,8 @@
           "storageKey": null
         }
       ],
-      "storageKey": null
+      "storageKey": null,
+      "idField": "id"
     }
   ],
   "type": "User"

@@ -31,6 +31,7 @@ import type {
 } from 'RelayConcreteNode';
 import type {GeneratedNode} from 'RelayConcreteNode';
 import type {Fragment, Root} from 'RelayIR';
+import type {NodeVisitor} from 'RelayIRVisitor';
 const {getRawType, isAbstractType, getNullableType} = GraphQLSchemaUtils;
 
 /* eslint-disable no-redeclare */
@@ -40,185 +41,192 @@ declare function generate(node: Fragment): ConcreteFragment;
 export type CompiledDocumentMap = Map<string, GeneratedNode>;
 export type RelayGeneratedNode = ConcreteRoot | ConcreteFragment;
 
-/**
- * @public
- *
- * Converts a Relay IR node into a plain JS object representation that can be
- * used at runtime.
- */
-function generate(node: Root | Fragment): ConcreteRoot | ConcreteFragment {
-  invariant(
-    ['Root', 'Fragment'].indexOf(node.kind) >= 0,
-    'RelayCodeGenerator: Unknown AST kind `%s`. Source: %s.',
-    node.kind,
-    getErrorMessage(node),
-  );
-  return RelayIRVisitor.visit(node, RelayCodeGenVisitor);
+class RelayCodeGenerator {
+  _codeGeneratorVisitor: NodeVisitor;
+
+  constructor(idField: string) {
+    this._codeGeneratorVisitor = {
+      leave: {
+        Root(node): ConcreteRoot {
+          return {
+            argumentDefinitions: node.argumentDefinitions,
+            kind: 'Root',
+            name: node.name,
+            operation: node.operation,
+            selections: flattenArray(node.selections),
+          };
+        },
+
+        Fragment(node): ConcreteFragment {
+          return {
+            argumentDefinitions: node.argumentDefinitions,
+            kind: 'Fragment',
+            metadata: node.metadata || null,
+            name: node.name,
+            selections: flattenArray(node.selections),
+            type: node.type.toString(),
+          };
+        },
+
+        LocalArgumentDefinition(node): ConcreteArgumentDefinition {
+          return {
+            kind: 'LocalArgument',
+            name: node.name,
+            type: node.type.toString(),
+            defaultValue: node.defaultValue,
+          };
+        },
+
+        RootArgumentDefinition(node): ConcreteArgumentDefinition {
+          return {
+            kind: 'RootArgument',
+            name: node.name,
+            type: node.type ? node.type.toString() : null,
+          };
+        },
+
+        Condition(node, key, parent, ancestors): ConcreteSelection {
+          invariant(
+            node.condition.kind === 'Variable',
+            'RelayCodeGenerator: Expected static `Condition` node to be ' +
+              'pruned or inlined. Source: %s.',
+            getErrorMessage(ancestors[0]),
+          );
+          return {
+            kind: 'Condition',
+            passingValue: node.passingValue,
+            condition: node.condition.variableName,
+            selections: flattenArray(node.selections),
+          };
+        },
+
+        FragmentSpread(node): ConcreteSelection {
+          return {
+            kind: 'FragmentSpread',
+            name: node.name,
+            args: valuesOrNull(sortByName(node.args)),
+          };
+        },
+
+        InlineFragment(node): ConcreteSelection {
+          return {
+            kind: 'InlineFragment',
+            type: node.typeCondition.toString(),
+            selections: flattenArray(node.selections),
+          };
+        },
+
+        LinkedField(node): Array<ConcreteSelection> {
+          const handles =
+            (node.handles &&
+              node.handles.map(handle => {
+                return {
+                  kind: 'LinkedHandle',
+                  alias: node.alias,
+                  args: valuesOrNull(sortByName(node.args)),
+                  handle: handle.name,
+                  name: node.name,
+                  key: handle.key,
+                  filters: handle.filters,
+                };
+              })) ||
+            [];
+          const type = getRawType(node.type);
+          return [
+            {
+              kind: 'LinkedField',
+              alias: node.alias,
+              args: valuesOrNull(sortByName(node.args)),
+              concreteType: !isAbstractType(type) ? type.toString() : null,
+              name: node.name,
+              plural: isPlural(node.type),
+              selections: flattenArray(node.selections),
+              storageKey: getStorageKey(node.name, node.args),
+              idField,
+            },
+            ...handles,
+          ];
+        },
+
+        ScalarField(node): Array<ConcreteSelection> {
+          const handles =
+            (node.handles &&
+              node.handles.map(handle => {
+                return {
+                  kind: 'ScalarHandle',
+                  alias: node.alias,
+                  args: valuesOrNull(sortByName(node.args)),
+                  handle: handle.name,
+                  name: node.name,
+                  key: handle.key,
+                  filters: handle.filters,
+                };
+              })) ||
+            [];
+          return [
+            {
+              kind: 'ScalarField',
+              alias: node.alias,
+              args: valuesOrNull(sortByName(node.args)),
+              name: node.name,
+              selections: valuesOrUndefined(flattenArray(node.selections)),
+              storageKey: getStorageKey(node.name, node.args),
+            },
+            ...handles,
+          ];
+        },
+
+        Variable(node, key, parent): ConcreteArgument {
+          return {
+            kind: 'Variable',
+            name: parent.name,
+            variableName: node.variableName,
+            type: parent.type ? parent.type.toString() : null,
+          };
+        },
+
+        Literal(node, key, parent): ConcreteArgument {
+          return {
+            kind: 'Literal',
+            name: parent.name,
+            value: node.value,
+            type: parent.type ? parent.type.toString() : null,
+          };
+        },
+
+        Argument(node, key, parent, ancestors): ?ConcreteArgument {
+          invariant(
+            ['Variable', 'Literal'].indexOf(node.value.kind) >= 0,
+            'RelayCodeGenerator: Complex argument values (Lists or ' +
+              'InputObjects with nested variables) are not supported, argument ' +
+              '`%s` had value `%s`. Source: %s.',
+            node.name,
+            prettyStringify(node.value),
+            getErrorMessage(ancestors[0]),
+          );
+          return node.value.value !== null ? node.value : null;
+        },
+      },
+    };
+  }
+
+  /**
+   * @public
+   *
+   * Converts a Relay IR node into a plain JS object representation that can be
+   * used at runtime.
+   */
+  generate(node: Root | Fragment): ConcreteRoot | ConcreteFragment {
+    invariant(
+      ['Root', 'Fragment'].indexOf(node.kind) >= 0,
+      'RelayCodeGenerator: Unknown AST kind `%s`. Source: %s.',
+      node.kind,
+      getErrorMessage(node),
+    );
+    return RelayIRVisitor.visit(node, this._codeGeneratorVisitor);
+  }
 }
 /* eslint-enable no-redeclare */
-
-const RelayCodeGenVisitor = {
-  leave: {
-    Root(node): ConcreteRoot {
-      return {
-        argumentDefinitions: node.argumentDefinitions,
-        kind: 'Root',
-        name: node.name,
-        operation: node.operation,
-        selections: flattenArray(node.selections),
-      };
-    },
-
-    Fragment(node): ConcreteFragment {
-      return {
-        argumentDefinitions: node.argumentDefinitions,
-        kind: 'Fragment',
-        metadata: node.metadata || null,
-        name: node.name,
-        selections: flattenArray(node.selections),
-        type: node.type.toString(),
-      };
-    },
-
-    LocalArgumentDefinition(node): ConcreteArgumentDefinition {
-      return {
-        kind: 'LocalArgument',
-        name: node.name,
-        type: node.type.toString(),
-        defaultValue: node.defaultValue,
-      };
-    },
-
-    RootArgumentDefinition(node): ConcreteArgumentDefinition {
-      return {
-        kind: 'RootArgument',
-        name: node.name,
-        type: node.type ? node.type.toString() : null,
-      };
-    },
-
-    Condition(node, key, parent, ancestors): ConcreteSelection {
-      invariant(
-        node.condition.kind === 'Variable',
-        'RelayCodeGenerator: Expected static `Condition` node to be ' +
-          'pruned or inlined. Source: %s.',
-        getErrorMessage(ancestors[0]),
-      );
-      return {
-        kind: 'Condition',
-        passingValue: node.passingValue,
-        condition: node.condition.variableName,
-        selections: flattenArray(node.selections),
-      };
-    },
-
-    FragmentSpread(node): ConcreteSelection {
-      return {
-        kind: 'FragmentSpread',
-        name: node.name,
-        args: valuesOrNull(sortByName(node.args)),
-      };
-    },
-
-    InlineFragment(node): ConcreteSelection {
-      return {
-        kind: 'InlineFragment',
-        type: node.typeCondition.toString(),
-        selections: flattenArray(node.selections),
-      };
-    },
-
-    LinkedField(node): Array<ConcreteSelection> {
-      const handles =
-        (node.handles &&
-          node.handles.map(handle => {
-            return {
-              kind: 'LinkedHandle',
-              alias: node.alias,
-              args: valuesOrNull(sortByName(node.args)),
-              handle: handle.name,
-              name: node.name,
-              key: handle.key,
-              filters: handle.filters,
-            };
-          })) ||
-        [];
-      const type = getRawType(node.type);
-      return [
-        {
-          kind: 'LinkedField',
-          alias: node.alias,
-          args: valuesOrNull(sortByName(node.args)),
-          concreteType: !isAbstractType(type) ? type.toString() : null,
-          name: node.name,
-          plural: isPlural(node.type),
-          selections: flattenArray(node.selections),
-          storageKey: getStorageKey(node.name, node.args),
-        },
-        ...handles,
-      ];
-    },
-
-    ScalarField(node): Array<ConcreteSelection> {
-      const handles =
-        (node.handles &&
-          node.handles.map(handle => {
-            return {
-              kind: 'ScalarHandle',
-              alias: node.alias,
-              args: valuesOrNull(sortByName(node.args)),
-              handle: handle.name,
-              name: node.name,
-              key: handle.key,
-              filters: handle.filters,
-            };
-          })) ||
-        [];
-      return [
-        {
-          kind: 'ScalarField',
-          alias: node.alias,
-          args: valuesOrNull(sortByName(node.args)),
-          name: node.name,
-          selections: valuesOrUndefined(flattenArray(node.selections)),
-          storageKey: getStorageKey(node.name, node.args),
-        },
-        ...handles,
-      ];
-    },
-
-    Variable(node, key, parent): ConcreteArgument {
-      return {
-        kind: 'Variable',
-        name: parent.name,
-        variableName: node.variableName,
-        type: parent.type ? parent.type.toString() : null,
-      };
-    },
-
-    Literal(node, key, parent): ConcreteArgument {
-      return {
-        kind: 'Literal',
-        name: parent.name,
-        value: node.value,
-        type: parent.type ? parent.type.toString() : null,
-      };
-    },
-
-    Argument(node, key, parent, ancestors): ?ConcreteArgument {
-      invariant(
-        ['Variable', 'Literal'].indexOf(node.value.kind) >= 0,
-        'RelayCodeGenerator: Complex argument values (Lists or ' +
-          'InputObjects with nested variables) are not supported, argument ' +
-          '`%s` had value `%s`. Source: %s.',
-        node.name,
-        prettyStringify(node.value),
-        getErrorMessage(ancestors[0]),
-      );
-      return node.value.value !== null ? node.value : null;
-    },
-  },
-};
 
 function isPlural(type: any): boolean {
   return getNullableType(type) instanceof GraphQLList;
@@ -274,4 +282,4 @@ function getStorageKey(
   return isLiteral ? formatStorageKey(fieldName, preparedArgs) : null;
 }
 
-module.exports = {generate};
+module.exports = RelayCodeGenerator;

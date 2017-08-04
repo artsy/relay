@@ -158,9 +158,10 @@ const RelayModernTestUtils = {
     context = ast.reduce((ctx, node) => ctx.add(node), context);
     context = (transforms || [])
       .reduce((ctx, {transform}) => transform(ctx), context);
+    const codeGenerator = new RelayCodeGenerator(context.getNodeIDFieldName())
     const documentMap = {};
     context.documents().forEach(node => {
-      documentMap[node.name] = RelayCodeGenerator.generate(node);
+      documentMap[node.name] = codeGenerator.generate(node);
     });
     return documentMap;
   },
@@ -175,7 +176,7 @@ const RelayModernTestUtils = {
     schema?: ?GraphQLSchema,
   ): {[key: string]: ConcreteBatch | ConcreteFragment} {
     const {transformASTSchema} = require('ASTConvert');
-    const {generate} = require('RelayCodeGenerator');
+    const RelayCodeGenerator = require('RelayCodeGenerator');
     const RelayCompiler = require('RelayCompiler');
     const RelayCompilerContext = require('RelayCompilerContext');
     const RelayIRTransforms = require('RelayIRTransforms');
@@ -187,11 +188,13 @@ const RelayModernTestUtils = {
       schema,
       RelayIRTransforms.schemaExtensions,
     );
+    const context = new RelayCompilerContext(relaySchema);
+    const codeGenerator = new RelayCodeGenerator(context.getNodeIDFieldName())
     const compiler = new RelayCompiler(
       schema,
-      new RelayCompilerContext(relaySchema),
+      context,
       RelayIRTransforms,
-      generate,
+      codeGenerator.generate.bind(codeGenerator),
     );
 
     compiler.addDefinitions(parseGraphQLText(relaySchema, text).definitions);
