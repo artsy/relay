@@ -91,4 +91,4 @@ foo {
 }
 ```
 
-- `GenerateRequisiteFieldTransform`: This optional, Relay-specific transform inserts `id` fields for globally identifiable objects and `__typename` fields wherever the type cannot be statically determined (e.g. for unions).
+- `GenerateRequisiteFieldTransform`: This optional, Relay-specific transform inserts object identification fields (which is either an `ID!` field on the `Node` interface or defaults to `id`) and `__typename` fields wherever the type cannot be statically determined (e.g. for unions).
