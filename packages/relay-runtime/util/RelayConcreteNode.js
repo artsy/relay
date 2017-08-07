@@ -78,6 +78,7 @@ export type ConcreteLinkedField = {
   plural: boolean,
   selections: Array<ConcreteSelection>,
   storageKey: ?string,
+  idField: ?string,
 };
 export type ConcreteLinkedHandle = {
   alias: ?string,

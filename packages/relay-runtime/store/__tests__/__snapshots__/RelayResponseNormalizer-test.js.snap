@@ -151,3 +151,30 @@ Object {
   },
 }
 `;
+
+exports[`RelayResponseNormalizer normalizes queries with custom Node "DataID" fields 1`] = `
+Object {
+  "Artist:banksy": Object {
+    "__id": "Artist:banksy",
+    "__typename": "Artist",
+    "name": "Banksy",
+  },
+  "Artwork:good-song": Object {
+    "__id": "Artwork:good-song",
+    "__typename": "Artwork",
+    "artists": Object {
+      "__refs": Array [
+        "Artist:banksy",
+      ],
+    },
+    "title": "Good Song",
+  },
+  "client:root": Object {
+    "__id": "client:root",
+    "__typename": "__Root",
+    "node{\\"customID\\":\\"Artwork:good-song\\"}": Object {
+      "__ref": "Artwork:good-song",
+    },
+  },
+}
+`;

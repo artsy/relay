@@ -338,6 +338,91 @@ describe('RelayResponseNormalizer', () => {
     });
   });
 
+  it('normalizes queries with custom Node "DataID" fields', () => {
+    const { buildSchema } = require('graphql');
+    const schema = buildSchema(`
+      schema {
+        query: Query
+      }
+
+      type Query {
+        node(customID: ID): Node
+      }
+
+      interface Node {
+        customID: ID!
+      }
+
+      type Artwork implements Node {
+        customID: ID!
+        title: String!
+        artists: [Artist]
+      }
+
+      type Artist implements Node {
+        customID: ID!
+        name: String!
+      }
+    `);
+
+    const {ArtworkQuery} = generateWithTransforms(
+      `
+      query ArtworkQuery($id: ID) {
+        node(customID: $id) {
+          ... on Artwork {
+            title
+            artists {
+              name
+            }
+          }
+        }
+      }
+      `,
+      null,
+      schema,
+    );
+
+    const payload = {
+      node: {
+        __typename: 'Artwork',
+        customID: 'Artwork:good-song',
+        title: 'Good Song',
+        artists: [{
+          customID: 'Artist:banksy',
+          name: 'Banksy',
+        }],
+      },
+    };
+
+    const recordSource = new RelayInMemoryRecordSource();
+    recordSource.set(ROOT_ID, RelayModernRecord.create(ROOT_ID, ROOT_TYPE));
+    const handleFieldPayloads = normalize(
+      recordSource,
+      {
+        dataID: ROOT_ID,
+        node: ArtworkQuery,
+        variables: {id: 'Artwork:good-song'},
+      },
+      payload,
+    );
+    expect(recordSource.toJSON()).toMatchSnapshot();
+    // expect(handleFieldPayloads.length).toBe(2);
+    // expect(handleFieldPayloads[0]).toEqual({
+    //   args: {},
+    //   dataID: 'pet',
+    //   fieldKey: 'name',
+    //   handle: 'friendsName',
+    //   handleKey: '__name_friendsName',
+    // });
+    // expect(handleFieldPayloads[1]).toEqual({
+    //   args: {first: 1},
+    //   dataID: '4',
+    //   fieldKey: 'friends{"first":1}',
+    //   handle: 'bestFriends',
+    //   handleKey: '__friends_bestFriends',
+    // });
+  });
+
   it('warns in __DEV__ if payload data is missing an expected field', () => {
     jest.mock('warning');
 

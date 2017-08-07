@@ -146,15 +146,18 @@ const RelayModernTestUtils = {
     transforms?: ?Array<{
       transform: (context: RelayCompilerContext) => RelayCompilerContext,
     }>,
+    schema?: ?GraphQLSchema,
   ): {[key: string]: ConcreteRoot | ConcreteFragment} {
     const RelayCodeGenerator = require('RelayCodeGenerator');
     // eslint-disable-next-line no-shadow
     const RelayCompilerContext = require('RelayCompilerContext');
     const RelayParser = require('RelayParser');
-    const RelayTestSchema = require('RelayTestSchema');
+    if (!schema) {
+      schema = require('RelayTestSchema');
+    }
 
-    const ast = RelayParser.parse(RelayTestSchema, text);
-    let context = new RelayCompilerContext(RelayTestSchema);
+    const ast = RelayParser.parse(schema, text);
+    let context = new RelayCompilerContext(schema);
     context = ast.reduce((ctx, node) => ctx.add(node), context);
     context = (transforms || [])
       .reduce((ctx, {transform}) => transform(ctx), context);

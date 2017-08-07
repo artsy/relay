@@ -80,6 +80,13 @@ function normalize(
 }
 
 /**
+ * Retrieves either the ID field recorded by the compiler or defaults to `id`.
+ */
+function nodeIDField(field: ConcreteLinkedField, fieldValue: mixed): ?string {
+  return (field.idField && fieldValue[field.idField]) || fieldValue.id;
+}
+
+/**
  * @private
  *
  * Helper for handling payloads.
@@ -241,7 +248,7 @@ class RelayResponseNormalizer {
       storageKey,
     );
     const nextID =
-      fieldValue.id ||
+      nodeIDField(field, fieldValue) ||
       // Reuse previously generated client IDs
       RelayModernRecord.getLinkedRecordID(record, storageKey) ||
       generateRelayClientID(RelayModernRecord.getDataID(record), storageKey);
@@ -290,7 +297,7 @@ class RelayResponseNormalizer {
       );
 
       const nextID =
-        item.id ||
+        nodeIDField(field, item) ||
         (prevIDs && prevIDs[nextIndex]) || // Reuse previously generated client IDs
         generateRelayClientID(
           RelayModernRecord.getDataID(record),

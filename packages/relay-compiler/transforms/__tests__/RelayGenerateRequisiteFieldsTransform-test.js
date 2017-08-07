@@ -19,7 +19,7 @@ const RelayPrinter = require('RelayPrinter');
 const RelayTestSchema = require('RelayTestSchema');
 
 const getGoldenMatchers = require('getGoldenMatchers');
-const { buildSchema } = require('graphql')
+const { buildSchema } = require('graphql');
 
 describe('RelayGenerateRequisiteFieldsTransform', () => {
   beforeEach(() => {
