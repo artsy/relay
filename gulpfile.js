@@ -52,8 +52,10 @@ const babelOptions = require('./scripts/getBabelOptions')({
       'relay-debugger-react-native-runtime',
     signedsource: 'signedsource',
     'StaticContainer.react': 'react-static-container',
-    util: 'util',
-    yargs: 'yargs'
+    'util': 'util',
+    'yargs': 'yargs',
+    'typescript': 'typescript',
+    'tsconfig.json': 'tsconfig.json',
   },
   plugins: [
     'transform-flow-strip-types',

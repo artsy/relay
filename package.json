@@ -68,7 +68,8 @@
     "signedsource": "1.0.0",
     "webpack": "1.13.1",
     "webpack-stream": "3.2.0",
-    "yargs": "7.0.2"
+    "yargs": "7.0.2",
+    "typescript": "^2.3.2"
   },
   "private": true,
   "devEngines": {
