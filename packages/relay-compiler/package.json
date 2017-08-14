@@ -30,6 +30,7 @@
     "immutable": "~3.7.6",
     "relay-runtime": "1.4.1",
     "signedsource": "^1.0.0",
-    "yargs": "^9.0.0"
+    "yargs": "^9.0.0",
+    "typescript": "^2.3.2"
   }
 }

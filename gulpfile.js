@@ -51,8 +51,10 @@ const babelOptions = require('./scripts/getBabelOptions')({
     ReactNative: 'react-native',
     RelayRuntime: 'relay-runtime',
     signedsource: 'signedsource',
-    util: 'util',
-    yargs: 'yargs'
+    'util': 'util',
+    'yargs': 'yargs',
+    'typescript': 'typescript',
+    'tsconfig.json': 'tsconfig.json',
   },
   plugins: [
     'transform-flow-strip-types',

@@ -31,7 +31,13 @@ const FIND_OPTIONS = {
 
 // Throws an error if parsing the file fails
 function parseFile(baseDir: string, file: File): ?DocumentNode {
-  const text = fs.readFileSync(path.join(baseDir, file.relPath), 'utf8');
+  let text = fs.readFileSync(path.join(baseDir, file.relPath), 'utf8');
+
+  if (/^\.tsx?$/.test(path.extname(file.relPath))) {
+    const tsconfig = __non_webpack_require__(path.resolve('tsconfig.json'));
+    const ts = require('typescript');
+    text = ts.transpileModule(text, tsconfig).outputText;
+  }
 
   invariant(
     text.indexOf('graphql') >= 0,
