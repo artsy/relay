@@ -89,7 +89,7 @@ function canHaveSelections(type: GraphQLType): boolean {
  *
  * https://github.com/graphql/graphql-future/blob/master/01%20-%20__id.md
  */
-function hasID(schema: GraphQLSchema, type: GraphQLCompositeType): boolean {
+function hasID(schema: GraphQLSchema, type: GraphQLCompositeType, fieldName: string): boolean {
   const unmodifiedType = getRawType(type);
   invariant(
     unmodifiedType instanceof GraphQLObjectType ||
@@ -99,7 +99,7 @@ function hasID(schema: GraphQLSchema, type: GraphQLCompositeType): boolean {
     type,
   );
   const idType = schema.getType(ID_TYPE);
-  const idField = unmodifiedType.getFields()[ID];
+  const idField = unmodifiedType.getFields()[fieldName];
   return idField && getRawType(idField.type) === idType;
 }
 

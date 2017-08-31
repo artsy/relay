@@ -123,52 +123,87 @@ function generateIDSelections(
   field: LinkedField,
   type: GraphQLType,
 ): ?Array<Selection> {
-  if (hasUnaliasedSelection(field, ID)) {
+  const generatedNodeIdSelections = generateSpecificIDSelections(context, field, type, context.getNodeIDFieldName());
+  if (!generatedNodeIdSelections) {
+    // The field already has an unaliased selection for the Node ID field.
     return null;
+  } else if (generatedNodeIdSelections.length > 0) {
+    return generatedNodeIdSelections;
   }
-  const unmodifiedType = assertCompositeType(getRawType(type));
+
+  if (context.getNodeIDFieldName() !== ID) {
+    const generatedFallbackIdSelections = generateSpecificIDSelections(context, field, type, ID);
+    if (!generatedFallbackIdSelections) {
+      // The field already has an unaliased selection for the fallback ID field.
+      return null;
+    } else if (generatedFallbackIdSelections.length > 0) {
+      return generatedFallbackIdSelections;
+    }
+  }
+
   const generatedSelections = [];
-  // Object or  Interface type that has `id` field
-  if (
-    canHaveSelections(unmodifiedType) &&
-    hasID(context.schema, unmodifiedType)
-  ) {
-    const idType = assertLeafType(context.schema.getType(ID_TYPE));
-    generatedSelections.push({
-      kind: 'ScalarField',
-      alias: (null: ?string),
-      args: [],
-      directives: [],
-      handles: null,
-      metadata: null,
-      name: ID,
-      type: idType,
-    });
-  } else if (isAbstractType(unmodifiedType)) {
+  const unmodifiedType = assertCompositeType(getRawType(type));
+  if (isAbstractType(unmodifiedType)) {
     // Union or interface: concrete types may implement `Node` or have an `id`
     // field
     const idType = assertLeafType(context.schema.getType(ID_TYPE));
     if (mayImplement(context.schema, unmodifiedType, NODE_TYPE)) {
       const nodeType = assertCompositeType(context.schema.getType(NODE_TYPE));
-      generatedSelections.push(buildIdFragment(nodeType, idType));
+      generatedSelections.push(buildIdFragment(nodeType, idType, context.getNodeIDFieldName()));
     }
     const abstractType = assertAbstractType(unmodifiedType);
     context.schema.getPossibleTypes(abstractType).forEach(possibleType => {
-      if (
-        !implementsInterface(possibleType, NODE_TYPE) &&
-        hasID(context.schema, possibleType)
-      ) {
-        generatedSelections.push(buildIdFragment(possibleType, idType));
+      if (!implementsInterface(possibleType, NODE_TYPE)) {
+        if (hasID(context.schema, possibleType, context.getNodeIDFieldName())) {
+          generatedSelections.push(buildIdFragment(possibleType, idType, context.getNodeIDFieldName()));
+        } else if (hasID(context.schema, possibleType, ID)) {
+          generatedSelections.push(buildIdFragment(possibleType, idType, ID));
+        }
       }
     });
-  } else {
-    const nodeType = unmodifiedType.getInterfaces().find(type => type.toString() === NODE_TYPE)
-    if (nodeType) {
-      const idType = context.schema.getType(ID_TYPE);
-      generatedSelections.push(buildIdFragment(nodeType, idType, context.getNodeIDFieldName()));
-    }
   }
   return generatedSelections;
+}
+
+function generateSpecificIDSelections(
+  context: RelayCompilerContext,
+  field: LinkedField,
+  type: GraphQLType,
+  idFieldName: string,
+): ?Array<Selection> {
+  if (hasUnaliasedSelection(field, idFieldName)) {
+    return null;
+  }
+  const generatedSelections = []
+  const unmodifiedType = assertCompositeType(getRawType(type));
+  // Object or  Interface type that has `id` field
+  if (
+    canHaveSelections(unmodifiedType) &&
+    hasID(context.schema, unmodifiedType, idFieldName)
+  ) {
+    const idType = assertLeafType(context.schema.getType(ID_TYPE));
+    generatedSelections.push(buildIdSelection(idType, idFieldName));
+  }
+  return generatedSelections;
+}
+
+/**
+ * @internal
+ */
+function buildIdSelection(
+  idType: GraphQLLeafType,
+  idFieldName: string,
+): Selection {
+  return {
+    kind: 'ScalarField',
+    alias: (null: ?string),
+    args: [],
+    directives: [],
+    handles: null,
+    metadata: null,
+    name: idFieldName,
+    type: idType,
+  };
 }
 
 /**
@@ -177,25 +212,14 @@ function generateIDSelections(
 function buildIdFragment(
   fragmentType: GraphQLCompositeType,
   idType: GraphQLLeafType,
-  fieldName: ?string
+  fieldName: string
 ): InlineFragment {
   return {
     kind: 'InlineFragment',
     directives: [],
     metadata: null,
     typeCondition: fragmentType,
-    selections: [
-      {
-        kind: 'ScalarField',
-        alias: (null: ?string),
-        args: [],
-        directives: [],
-        handles: null,
-        metadata: null,
-        name: fieldName || ID,
-        type: idType,
-      },
-    ],
+    selections: [buildIdSelection(idType, fieldName)],
   };
 }
 
