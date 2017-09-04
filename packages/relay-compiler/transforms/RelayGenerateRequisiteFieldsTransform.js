@@ -124,20 +124,20 @@ function generateIDSelections(
   type: GraphQLType,
 ): ?Array<Selection> {
   const generatedNodeIdSelections = generateSpecificIDSelections(context, field, type, context.getNodeIDFieldName());
-  if (!generatedNodeIdSelections) {
+  if (generatedNodeIdSelections === null) {
     // The field already has an unaliased selection for the Node ID field.
     return null;
-  } else if (generatedNodeIdSelections.length > 0) {
-    return generatedNodeIdSelections;
+  } else if (generatedNodeIdSelections) {
+    return [generatedNodeIdSelections];
   }
 
   if (context.getNodeIDFieldName() !== ID) {
     const generatedFallbackIdSelections = generateSpecificIDSelections(context, field, type, ID);
-    if (!generatedFallbackIdSelections) {
+    if (generatedFallbackIdSelections === null) {
       // The field already has an unaliased selection for the fallback ID field.
       return null;
-    } else if (generatedFallbackIdSelections.length > 0) {
-      return generatedFallbackIdSelections;
+    } else if (generatedFallbackIdSelections) {
+      return [generatedFallbackIdSelections];
     }
   }
 
@@ -170,11 +170,10 @@ function generateSpecificIDSelections(
   field: LinkedField,
   type: GraphQLType,
   idFieldName: string,
-): ?Array<Selection> {
+): ?Selection {
   if (hasUnaliasedSelection(field, idFieldName)) {
     return null;
   }
-  const generatedSelections = []
   const unmodifiedType = assertCompositeType(getRawType(type));
   // Object or  Interface type that has `id` field
   if (
@@ -182,9 +181,9 @@ function generateSpecificIDSelections(
     hasID(context.schema, unmodifiedType, idFieldName)
   ) {
     const idType = assertLeafType(context.schema.getType(ID_TYPE));
-    generatedSelections.push(buildIdSelection(idType, idFieldName));
+    return buildIdSelection(idType, idFieldName);
   }
-  return generatedSelections;
+  return undefined;
 }
 
 /**
