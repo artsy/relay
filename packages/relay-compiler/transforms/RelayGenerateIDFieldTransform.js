@@ -11,7 +11,7 @@
 
 'use strict';
 
-const {hasUnaliasedSelection} = require('./RelayTransformUtils');
+const {getUnaliasedSelectionIndex} = require('./RelayTransformUtils');
 const {assertAbstractType, assertCompositeType} = require('graphql');
 const {
   CompilerContext,
@@ -59,9 +59,10 @@ function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
   const idFieldDefinition = getIDFieldDefinition(schema, unmodifiedType);
 
   if (idFieldDefinition) {
-    // If the field already has an unaliased `id` field, do nothing
-    if (hasUnaliasedSelection(node, idFieldDefinition.name)) {
-      return transformedNode;
+    // If the field already has an unaliased `id` field, do nothing but mark it as being the DataID
+    const index = getUnaliasedSelectionIndex(node, idFieldDefinition.name);
+    if (index >= 0) {
+      return markSelectionAsDataID(transformedNode, index);
     }
     // If the field type has a ID field add a selection for that field
     if (canHaveSelections(unmodifiedType)) {
@@ -148,9 +149,35 @@ function buildSelectionFromFieldDefinition(
     args: [],
     directives: [],
     handles: null,
-    metadata: null,
+    metadata: {
+      isDataID: true,
+    },
     name: field.name,
     type: (field.type: any),
+  };
+}
+
+/**
+ * @internal
+ *
+ * Returns a copy of the node where the selection is marked as being the DataID field.
+ */
+function markSelectionAsDataID(transformedNode: any, index: number): any {
+  const selections = transformedNode.selections;
+  const selection = {
+    ...selections[index],
+    metadata: {
+      ...selections[index].metadata,
+      isDataID: true,
+    },
+  };
+  return {
+    ...transformedNode,
+    selections: [
+      ...selections.slice(0, index),
+      selection,
+      ...selections.slice(index + 1),
+    ],
   };
 }
 

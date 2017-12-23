@@ -18,6 +18,23 @@ const RelayTestSchema = require('RelayTestSchema');
 
 const getGoldenMatchers = require('getGoldenMatchers');
 
+function transformAST(ast) {
+  return new GraphQLCompilerContext(RelayTestSchema)
+    .addAll(ast)
+    .applyTransforms([RelayGenerateIDFieldTransform.transform])
+    .documents();
+}
+
+function transformDocuments(text) {
+  return transformAST(RelayParser.parse(RelayTestSchema, text));
+}
+
+function printTransformedDocuments(text) {
+  return transformDocuments(text)
+    .map(GraphQLIRPrinter.print)
+    .join('\n');
+}
+
 describe('RelayGenerateIDFieldTransform', () => {
   beforeEach(() => {
     expect.extend(getGoldenMatchers(__filename));
@@ -25,13 +42,57 @@ describe('RelayGenerateIDFieldTransform', () => {
 
   it('matches expected output', () => {
     expect('fixtures/generate-id-field-transform').toMatchGolden(text => {
-      const ast = RelayParser.parse(RelayTestSchema, text);
-      return new GraphQLCompilerContext(RelayTestSchema)
-        .addAll(ast)
-        .applyTransforms([RelayGenerateIDFieldTransform.transform])
-        .documents()
-        .map(GraphQLIRPrinter.print)
-        .join('\n');
+      return printTransformedDocuments(text);
     });
+  });
+
+  it('records the fact that an existing ID selection is to be used at runtime', () => {
+    const transformed = transformDocuments(
+      `
+      query StoryQuery {
+        story {
+          lastName
+          id
+        }
+      }
+    `,
+    );
+    const idField = transformed[0].selections[0].selections[1];
+    expect(idField.metadata).toEqual({isDataID: true});
+  });
+
+  it('records the fact that an existing ID selection is to be used at runtime and retains existing metadata', () => {
+    const ast = RelayParser.parse(
+      RelayTestSchema,
+      `
+      query StoryQuery {
+        story {
+          lastName
+          id
+        }
+      }
+    `,
+    );
+    ast[0].selections[0].selections[1].metadata = {someOtherMetadata: true};
+    const transformed = transformAST(ast);
+    const idField = transformed[0].selections[0].selections[1];
+    expect(idField.metadata).toEqual({
+      isDataID: true,
+      someOtherMetadata: true,
+    });
+  });
+
+  it('records the fact that a new ID selection is to be used at runtime', () => {
+    const transformed = transformDocuments(
+      `
+      query StoryQuery {
+        story {
+          lastName
+        }
+      }
+    `,
+    );
+    const idField = transformed[0].selections[0].selections[1];
+    expect(idField.metadata).toEqual({isDataID: true});
   });
 });
