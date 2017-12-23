@@ -18,6 +18,7 @@ const {
   assertAbstractType,
   getNamedType,
   getNullableType,
+  isInterfaceType,
   isType,
   print,
   typeFromAST,
@@ -32,6 +33,7 @@ import type {
   ASTNode,
   GraphQLCompositeType,
   GraphQLEnumType,
+  GraphQLField,
   GraphQLInputObjectType,
   GraphQLNamedType,
   GraphQLNonNull,
@@ -42,6 +44,7 @@ import type {
 
 const ID = 'id';
 const ID_TYPE = 'ID';
+const NODE_TYPE = 'Node';
 
 type GraphQLSingularType =
   | GraphQLScalarType
@@ -242,9 +245,59 @@ function getTypeFromAST(schema: GraphQLSchema, ast: TypeNode): GraphQLType {
   return (type: any);
 }
 
+function getNodeIDFieldDefinition(schema: GraphQLSchema): ?GraphQLField<*, *> {
+  const iface = schema.getType(NODE_TYPE);
+  if (isInterfaceType(iface)) {
+    const idType = schema.getType(ID_TYPE);
+    const allFields: Array<GraphQLField<*, *>> = (Object.values(
+      iface.getFields(),
+    ): any);
+    const fields = allFields.filter(field => {
+      return getNullableType(field.type) === idType;
+    });
+    invariant(
+      fields.length === 1,
+      'GraphQLSchemaUtils.getNodeIDFieldDefinition(): Expected the Node interface to have one field of type `ID!`, ' +
+        'but found %s.',
+      fields.length === 0
+        ? 'none'
+        : fields.map(field => `\`${field.name}\``).join(', '),
+    );
+    return fields[0];
+  }
+  return null;
+}
+
+function getIDFieldDefinition(
+  schema: GraphQLSchema,
+  type: GraphQLCompositeType,
+): ?GraphQLField<*, *> {
+  const unmodifiedType = getRawType(type);
+  if (
+    unmodifiedType instanceof GraphQLObjectType ||
+    unmodifiedType instanceof GraphQLInterfaceType
+  ) {
+    const idType = schema.getType(ID_TYPE);
+    const nodeIDField = getNodeIDFieldDefinition(schema);
+    if (nodeIDField) {
+      const foundNodeIDField = unmodifiedType.getFields()[nodeIDField.name];
+      if (foundNodeIDField && getRawType(foundNodeIDField.type) === idType) {
+        return foundNodeIDField;
+      }
+    }
+    const idField = unmodifiedType.getFields()[ID];
+    if (idField && getRawType(idField.type) === idType) {
+      return idField;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   assertTypeWithFields,
   canHaveSelections,
+  getIDFieldDefinition,
+  getNodeIDFieldDefinition,
   getNullableType,
   getRawType,
   getSingularType,
