@@ -20,6 +20,7 @@ const RelayRecordSourceProxy = require('RelayRecordSourceProxy');
 const RelayResponseNormalizer = require('RelayResponseNormalizer');
 const RelayStoreUtils = require('RelayStoreUtils');
 const RelayModernTestUtils = require('RelayModernTestUtils');
+const RelayGenerateIDFieldTransform = require('RelayGenerateIDFieldTransform');
 const RelayConnectionInterface = require('RelayConnectionInterface');
 
 const getRelayHandleKey = require('getRelayHandleKey');
@@ -105,6 +106,7 @@ describe('RelayConnectionHandler', () => {
         }
       }
     `,
+      [RelayGenerateIDFieldTransform.transform],
     ));
   });
 
