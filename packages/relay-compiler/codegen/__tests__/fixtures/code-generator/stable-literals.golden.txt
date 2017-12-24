@@ -47,9 +47,18 @@
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
+          },
+          {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }

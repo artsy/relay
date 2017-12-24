@@ -45,7 +45,8 @@
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -129,7 +130,8 @@
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -228,7 +230,8 @@ fragment UserProfile_user on User {
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -265,5 +268,6 @@ fragment UserProfile_user on User {
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }

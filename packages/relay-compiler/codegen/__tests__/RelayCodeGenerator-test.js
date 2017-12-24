@@ -13,6 +13,7 @@
 const GraphQLCompilerContext = require('GraphQLCompilerContext');
 const RelayCodeGenerator = require('RelayCodeGenerator');
 const RelayTestSchema = require('RelayTestSchema');
+const RelayGenerateIDFieldTransform = require('RelayGenerateIDFieldTransform');
 
 const getGoldenMatchers = require('getGoldenMatchers');
 const parseGraphQLText = require('parseGraphQLText');
@@ -30,6 +31,7 @@ describe('RelayCodeGenerator', () => {
           definitions,
         );
         return context
+          .applyTransforms([RelayGenerateIDFieldTransform.transform])
           .documents()
           .map(doc => {
             const node =
@@ -68,6 +70,7 @@ describe('RelayCodeGenerator', () => {
           definitions,
         );
         return context
+          .applyTransforms([RelayGenerateIDFieldTransform.transform])
           .documents()
           .map(doc => {
             const node = {

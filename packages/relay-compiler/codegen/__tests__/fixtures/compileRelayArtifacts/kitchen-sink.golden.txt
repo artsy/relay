@@ -85,7 +85,8 @@
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -298,7 +299,8 @@
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -542,5 +544,6 @@ fragment UserFragment_3M2EvT on User {
         }
       ]
     }
-  ]
+  ],
+  "idField": "id"
 }

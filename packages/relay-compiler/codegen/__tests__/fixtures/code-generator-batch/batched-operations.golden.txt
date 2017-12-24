@@ -45,7 +45,8 @@
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
           }
         ]
       }
@@ -90,7 +91,8 @@
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
           }
         ]
       }
@@ -135,7 +137,8 @@
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
           }
         ]
       }

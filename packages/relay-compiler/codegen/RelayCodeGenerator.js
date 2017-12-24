@@ -66,6 +66,13 @@ const RelayCodeGenVisitor = {
         node.metadata.idType,
       );
     }
+    if (node.kind === 'Fragment' || node.kind === 'LinkedField') {
+      const selections = flattenArray(node.selections);
+      const idFieldSelection = selections.find(
+        selection => selection.metadata && selection.metadata.isDataID,
+      );
+      node.idField = idFieldSelection && idFieldSelection.name;
+    }
     return node;
   },
   leave: {
@@ -143,6 +150,7 @@ const RelayCodeGenVisitor = {
         metadata: node.metadata || null,
         argumentDefinitions: node.argumentDefinitions,
         selections: flattenArray(node.selections),
+        idField: node.idField,
       };
     },
 
@@ -231,6 +239,7 @@ const RelayCodeGenVisitor = {
         concreteType: !isAbstractType(type) ? type.toString() : null,
         plural: isPlural(node.type),
         selections: flattenArray(node.selections),
+        idField: node.idField,
       };
       // Precompute storageKey if possible
       field.storageKey = getStaticStorageKey(field);

@@ -45,6 +45,14 @@
       "handle": "clientFriends",
       "key": "",
       "filters": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }

@@ -21,5 +21,6 @@
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }

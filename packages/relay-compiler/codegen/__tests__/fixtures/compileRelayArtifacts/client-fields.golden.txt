@@ -51,7 +51,8 @@
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -97,7 +98,8 @@
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -162,7 +164,8 @@ fragment NodeFragment on Node {
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -218,7 +221,8 @@ fragment NodeFragment on Node {
                   "args": null,
                   "storageKey": null
                 }
-              ]
+              ],
+              "idField": "id"
             }
           ]
         },
@@ -267,7 +271,8 @@ fragment NodeFragment on Node {
         }
       ]
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -284,7 +289,8 @@ fragment NodeFragment on Node {
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {

@@ -154,7 +154,8 @@
                                             "args": null,
                                             "storageKey": null
                                           }
-                                        ]
+                                        ],
+                                        "idField": "id"
                                       },
                                       {
                                         "kind": "ScalarField",
@@ -199,7 +200,8 @@
                                 "args": null,
                                 "storageKey": null
                               }
-                            ]
+                            ],
+                            "idField": "id"
                           },
                           {
                             "kind": "ScalarField",
@@ -215,7 +217,8 @@
                             "args": null,
                             "storageKey": null
                           }
-                        ]
+                        ],
+                        "idField": "id"
                       },
                       {
                         "kind": "ScalarField",
@@ -255,7 +258,8 @@
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -417,7 +421,8 @@
                                             "args": null,
                                             "storageKey": null
                                           }
-                                        ]
+                                        ],
+                                        "idField": "id"
                                       },
                                       {
                                         "kind": "ScalarField",
@@ -478,7 +483,8 @@
                                 "args": null,
                                 "storageKey": null
                               }
-                            ]
+                            ],
+                            "idField": "id"
                           },
                           {
                             "kind": "ScalarField",
@@ -494,7 +500,8 @@
                             "args": null,
                             "storageKey": null
                           }
-                        ]
+                        ],
+                        "idField": "id"
                       },
                       {
                         "kind": "ScalarField",
@@ -550,7 +557,8 @@
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
