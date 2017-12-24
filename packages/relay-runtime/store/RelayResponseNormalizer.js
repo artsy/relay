@@ -256,7 +256,7 @@ class RelayResponseNormalizer {
       storageKey,
     );
     const nextID =
-      fieldValue.id ||
+      (field.idField && fieldValue[field.idField]) ||
       // Reuse previously generated client IDs
       RelayModernRecord.getLinkedRecordID(record, storageKey) ||
       generateRelayClientID(RelayModernRecord.getDataID(record), storageKey);
@@ -305,7 +305,7 @@ class RelayResponseNormalizer {
       );
 
       const nextID =
-        item.id ||
+        (field.idField && item[field.idField]) ||
         (prevIDs && prevIDs[nextIndex]) || // Reuse previously generated client IDs
         generateRelayClientID(
           RelayModernRecord.getDataID(record),
