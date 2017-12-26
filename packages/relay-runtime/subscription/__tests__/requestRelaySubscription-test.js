@@ -171,6 +171,7 @@ describe('requestRelaySubscription-test', () => {
             hasNextPage: false,
           },
         },
+        id: 'foo',
       },
     });
   });

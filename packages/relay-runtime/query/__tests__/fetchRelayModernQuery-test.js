@@ -66,6 +66,7 @@ describe('fetchRelayModernQuery', () => {
     });
     expect(await promise).toEqual({
       me: {
+        id: '842472',
         name: 'Joe',
       },
     });

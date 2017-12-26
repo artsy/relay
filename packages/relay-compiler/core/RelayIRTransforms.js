@@ -48,6 +48,7 @@ const relayCommonTransforms: Array<IRTransform> = [
   RelayRelayDirectiveTransform.transform,
   RelayMaskTransform.transform,
   RelayDeferrableFragmentTransform.transformOperations,
+  RelayGenerateIDFieldTransform.transform,
 ];
 
 // Transforms applied to fragments used for reading data from a store
@@ -64,7 +65,6 @@ const relayQueryTransforms: Array<IRTransform> = [
   RelayApplyFragmentArgumentTransform.transform,
   SkipClientFieldTransform.transform,
   SkipUnreachableNodeTransform.transform,
-  RelayGenerateIDFieldTransform.transform,
 ];
 
 // Transforms applied to the code used to process a query response.

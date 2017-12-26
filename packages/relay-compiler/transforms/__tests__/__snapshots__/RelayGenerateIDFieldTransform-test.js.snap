@@ -108,6 +108,7 @@ fragment ActorFragment on Actor {
       month
     }
   }
+  id
 }
 
 query UnaliasedIDQuery {
@@ -166,6 +167,7 @@ fragment ActorFragment on Actor {
       month
     }
   }
+  id
 }
 
 query UnaliasedIDQuery {

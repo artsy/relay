@@ -645,6 +645,7 @@ describe('Configs: RANGE_ADD', () => {
     });
     expect(snapshot.data).toEqual({
       node: {
+        id: 'feedback123',
         topLevelComments: {
           edges: [
             {
@@ -707,6 +708,7 @@ describe('Configs: RANGE_ADD', () => {
 
     expect(snapshot.data).toEqual({
       node: {
+        id: 'feedback123',
         topLevelComments: {
           edges: [
             {
