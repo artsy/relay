@@ -81,6 +81,13 @@
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
   ]
 }
@@ -110,6 +117,13 @@
           "type": "Boolean"
         }
       ],
+      "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
       "storageKey": null
     }
   ]

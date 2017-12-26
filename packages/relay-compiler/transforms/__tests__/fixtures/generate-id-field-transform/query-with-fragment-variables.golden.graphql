@@ -29,6 +29,7 @@ fragment ActorFragment on Actor {
       month
     }
   }
+  id
 }
 
 query UnaliasedIDQuery {

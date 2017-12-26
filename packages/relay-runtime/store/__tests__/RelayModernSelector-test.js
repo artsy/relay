@@ -109,7 +109,7 @@ describe('RelayModernSelector', () => {
         getSelector(variables, UserFragment, [zuck]),
       ).toFailInvariant(
         'RelayModernSelector: Expected value for fragment `UserFragment` to be an object, got ' +
-          '`[{"__fragments":{"UserFragment":{},"UsersFragment":{}},"__id":"4"}]`.',
+          '`[{"__fragments":{"UserFragment":{},"UsersFragment":{}},"__id":"4","id":"4"}]`.',
       );
     });
 

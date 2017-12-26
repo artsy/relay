@@ -577,7 +577,10 @@ describe('RelayPublishQueue', () => {
         expect(nodes.length).toBe(1);
         expect(nodes[0]).toBe(zuck);
 
-        expect(data).toEqual({me: {name: 'Zuck'}, nodes: [{name: 'Zuck'}]});
+        expect(data).toEqual({
+          me: {id: '4', name: 'Zuck'},
+          nodes: [{id: '4', name: 'Zuck'}],
+        });
 
         zuck.setValue(zuck.getValue('name').toUpperCase(), 'name');
       });

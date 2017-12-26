@@ -35,6 +35,13 @@
         "plural": false,
         "selections": [
           {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
+          },
+          {
             "kind": "InlineFragment",
             "type": "User",
             "selections": [

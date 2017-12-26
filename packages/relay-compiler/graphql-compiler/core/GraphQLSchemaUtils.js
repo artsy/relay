@@ -83,27 +83,6 @@ function canHaveSelections(type: GraphQLType): boolean {
 }
 
 /**
- * Implements duck typing that checks whether a type has an id field of the ID
- * type. This is approximating what we can hopefully do with the __id proposal
- * a bit more cleanly.
- *
- * https://github.com/graphql/graphql-future/blob/master/01%20-%20__id.md
- */
-function hasID(schema: GraphQLSchema, type: GraphQLCompositeType): boolean {
-  const unmodifiedType = getRawType(type);
-  invariant(
-    unmodifiedType instanceof GraphQLObjectType ||
-      unmodifiedType instanceof GraphQLInterfaceType,
-    'GraphQLSchemaUtils.hasID(): Expected a concrete type or interface, ' +
-      'got type `%s`.',
-    type,
-  );
-  const idType = schema.getType(ID_TYPE);
-  const idField = unmodifiedType.getFields()[ID];
-  return idField && getRawType(idField.type) === idType;
-}
-
-/**
  * Determine if a type is abstract (not concrete).
  *
  * Note: This is used in place of the `graphql` version of the function in order
@@ -294,6 +273,9 @@ function getIDFieldDefinition(
 }
 
 module.exports = {
+  ID,
+  ID_TYPE,
+  NODE_TYPE,
   assertTypeWithFields,
   canHaveSelections,
   getIDFieldDefinition,
@@ -302,7 +284,6 @@ module.exports = {
   getRawType,
   getSingularType,
   getTypeFromAST,
-  hasID,
   implementsInterface,
   isAbstractType,
   isUnionType,

@@ -43,6 +43,13 @@
             "kind": "FragmentSpread",
             "name": "OnlyClientFields",
             "args": null
+          },
+          {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
           }
         ]
       }
@@ -104,12 +111,18 @@ query BestFriendsQuery(
   node(id: $id) {
     __typename
     ...BestFriends
+    ...OnlyClientFields
     id
   }
 }
 
 fragment BestFriends on User {
   ...NodeFragment
+  id
+}
+
+fragment OnlyClientFields on User {
+  id
 }
 
 fragment NodeFragment on Node {
@@ -141,6 +154,13 @@ fragment NodeFragment on Node {
           "storageKey": null
         }
       ]
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
   ]
 }
@@ -226,6 +246,13 @@ fragment NodeFragment on Node {
       "kind": "FragmentSpread",
       "name": "FooFragment",
       "args": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     },
     {
       "kind": "InlineFragment",

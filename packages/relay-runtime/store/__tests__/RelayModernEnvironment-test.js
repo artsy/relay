@@ -418,6 +418,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(1);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '4',
           name: 'Zuck',
         },
       });
@@ -448,6 +449,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(1);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '4',
           name: 'ZUCK',
         },
       });
@@ -581,6 +583,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(1);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Joe',
         },
       });
@@ -732,6 +735,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(1);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Joe',
         },
       });
@@ -818,6 +822,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(1);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Joe',
         },
       });
@@ -875,11 +880,13 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(2);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Joe',
         },
       });
       expect(callback.mock.calls[1][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Jiyue',
         },
       });
@@ -920,6 +927,7 @@ describe('RelayModernEnvironment', () => {
       expect(callback.mock.calls.length).toBe(2);
       expect(callback.mock.calls[0][0].data).toEqual({
         me: {
+          id: '842472',
           name: 'Joe',
         },
       });

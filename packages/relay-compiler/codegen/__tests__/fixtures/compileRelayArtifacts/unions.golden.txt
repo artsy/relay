@@ -21,16 +21,16 @@
         "plural": false,
         "selections": [
           {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
+          },
+          {
             "kind": "InlineFragment",
             "type": "Story",
             "selections": [
-              {
-                "kind": "ScalarField",
-                "alias": null,
-                "name": "id",
-                "args": null,
-                "storageKey": null
-              },
               {
                 "kind": "LinkedField",
                 "alias": null,
