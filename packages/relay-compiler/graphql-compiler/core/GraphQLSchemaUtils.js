@@ -228,12 +228,14 @@ function getNodeIDFieldDefinition(schema: GraphQLSchema): ?GraphQLField<*, *> {
   const iface = schema.getType(NODE_TYPE);
   if (isInterfaceType(iface)) {
     const idType = schema.getType(ID_TYPE);
-    const allFields: Array<GraphQLField<*, *>> = (Object.values(
-      iface.getFields(),
-    ): any);
-    const fields = allFields.filter(field => {
-      return getNullableType(field.type) === idType;
-    });
+    const fields = [];
+    const allFields = iface.getFields();
+    for (const fieldName in allFields) {
+      const field = allFields[fieldName];
+      if (getNullableType(field.type) === idType) {
+        fields.push(field);
+      }
+    }
     invariant(
       fields.length === 1,
       'GraphQLSchemaUtils.getNodeIDFieldDefinition(): Expected the Node interface to have one field of type `ID!`, ' +
