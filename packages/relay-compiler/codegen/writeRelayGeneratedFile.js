@@ -33,10 +33,11 @@ export type FormatModule = ({|
   documentType:
     | typeof RelayConcreteNode.FRAGMENT
     | typeof RelayConcreteNode.REQUEST
-    | typeof RelayConcreteNode.BATCH_REQUEST,
+    | typeof RelayConcreteNode.BATCH_REQUEST
+    | null,
   docText: ?string,
   concreteText: string,
-  flowText: string,
+  typeText: string,
   hash: ?string,
   devOnlyAssignments: ?string,
   relayRuntimeModule: string,
@@ -47,25 +48,26 @@ async function writeRelayGeneratedFile(
   codegenDir: CodegenDirectory,
   generatedNode: GeneratedNode,
   formatModule: FormatModule,
-  flowText: string,
+  typeText: string,
   _persistQuery: ?(text: string) => Promise<string>,
   platform: ?string,
   relayRuntimeModule: string,
   sourceHash: string,
+  extension: string,
 ): Promise<?GeneratedNode> {
   // Copy to const so Flow can refine.
   const persistQuery = _persistQuery;
   const moduleName = generatedNode.name + '.graphql';
   const platformName = platform ? moduleName + '.' + platform : moduleName;
-  const filename = platformName + '.js';
-  const flowTypeName =
+  const filename = platformName + '.' + extension;
+  const typeName =
     generatedNode.kind === RelayConcreteNode.FRAGMENT
       ? 'ConcreteFragment'
       : generatedNode.kind === RelayConcreteNode.REQUEST
         ? 'ConcreteRequest'
         : generatedNode.kind === RelayConcreteNode.BATCH_REQUEST
           ? 'ConcreteBatchRequest'
-          : 'empty';
+          : null;
   const devOnlyProperties = {};
 
   let docText;
@@ -87,8 +89,8 @@ async function writeRelayGeneratedFile(
       hasher.update('cache-breaker-6');
       hasher.update(JSON.stringify(generatedNode));
       hasher.update(sourceHash);
-      if (flowText) {
-        hasher.update(flowText);
+      if (typeText) {
+        hasher.update(typeText);
       }
       if (persistQuery) {
         hasher.update('persisted');
@@ -142,9 +144,9 @@ async function writeRelayGeneratedFile(
 
   const moduleText = formatModule({
     moduleName,
-    documentType: flowTypeName,
+    documentType: typeName,
     docText,
-    flowText,
+    typeText,
     hash: hash ? `@relayHash ${hash}` : null,
     concreteText: dedupeJSONStringify(generatedNode),
     devOnlyAssignments,

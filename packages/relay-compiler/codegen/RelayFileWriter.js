@@ -11,7 +11,6 @@
 
 'use strict';
 
-const RelayFlowGenerator = require('../core/RelayFlowGenerator');
 const RelayParser = require('../core/RelayParser');
 const RelayValidator = require('../core/RelayValidator');
 
@@ -31,9 +30,9 @@ const {
 } = require('graphql-compiler');
 const {Map: ImmutableMap} = require('immutable');
 
-import type {ScalarTypeMapping} from '../core/RelayFlowTypeTransformers';
 import type {RelayCompilerTransforms} from './compileRelayArtifacts';
 import type {FormatModule} from './writeRelayGeneratedFile';
+import type {TypeGenerator} from '../language/RelayLanguagePluginInterface';
 import type {
   FileWriterInterface,
   Reporter,
@@ -54,7 +53,7 @@ export type ValidationRule = (context: ValidationContext) => any;
 export type WriterConfig = {
   baseDir: string,
   compilerTransforms: RelayCompilerTransforms,
-  customScalars: ScalarTypeMapping,
+  customScalars: { [type: string]: string },
   formatModule: FormatModule,
   generateExtraFiles?: GenerateExtraFiles,
   inputFieldWhiteListForFlow: Array<string>,
@@ -64,6 +63,8 @@ export type WriterConfig = {
   relayRuntimeModule?: string,
   schemaExtensions: Array<string>,
   useHaste: boolean,
+  extension: string,
+  typeGenerator: TypeGenerator,
   // Haste style module that exports flow types for GraphQL enums.
   // TODO(T22422153) support non-haste environments
   enumsHasteModule?: string,
@@ -213,7 +214,7 @@ class RelayFileWriter implements FileWriterInterface {
       };
 
       const transformedFlowContext = compilerContext.applyTransforms(
-        RelayFlowGenerator.flowTransforms,
+        this._config.typeGenerator.transforms,
         this._reporter,
       );
       const transformedQueryContext = compilerContext.applyTransforms(
@@ -266,14 +267,14 @@ class RelayFileWriter implements FileWriterInterface {
             const relayRuntimeModule =
               this._config.relayRuntimeModule || 'relay-runtime';
 
-            const flowNode = transformedFlowContext.get(node.name);
+            const typeNode = transformedFlowContext.get(node.name);
             invariant(
-              flowNode,
-              'RelayFileWriter: did not compile flow types for: %s',
+              typeNode,
+              'RelayFileWriter: did not compile types for: %s',
               node.name,
             );
 
-            const flowTypes = RelayFlowGenerator.generate(flowNode, {
+            const typeText = this._config.typeGenerator.generate(typeNode, {
               customScalars: this._config.customScalars,
               enumsHasteModule: this._config.enumsHasteModule,
               existingFragmentNames,
@@ -290,11 +291,12 @@ class RelayFileWriter implements FileWriterInterface {
               getGeneratedDirectory(node.name),
               node,
               formatModule,
-              flowTypes,
+              typeText,
               persistQuery,
               this._config.platform,
               relayRuntimeModule,
               sourceHash,
+              this._config.extension,
             );
           }),
         );

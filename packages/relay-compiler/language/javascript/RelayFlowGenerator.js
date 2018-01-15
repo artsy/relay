@@ -43,14 +43,13 @@ const {
   SchemaUtils,
 } = require('graphql-compiler');
 
-import type {ScalarTypeMapping} from './RelayFlowTypeTransformers';
 import type {IRTransform, Fragment, Root} from 'graphql-compiler';
 import type {GraphQLEnumType} from 'graphql';
 
 const {isAbstractType} = SchemaUtils;
 
 type Options = {|
-  +customScalars: ScalarTypeMapping,
+  +customScalars: { [type: string]: string },
   +useHaste: boolean,
   +enumsHasteModule: ?string,
   +existingFragmentNames: Set<string>,
@@ -475,5 +474,5 @@ const FLOW_TRANSFORMS: Array<IRTransform> = [
 
 module.exports = {
   generate: Profiler.instrument(generate, 'RelayFlowGenerator.generate'),
-  flowTransforms: FLOW_TRANSFORMS,
+  transforms: FLOW_TRANSFORMS,
 };

@@ -20,11 +20,11 @@ const {
   DotGraphQLParser,
 } = require('graphql-compiler');
 
-const RelayJSModuleParser = require('../core/RelayJSModuleParser');
+const RelaySourceModuleParser = require('../core/RelaySourceModuleParser');
 const RelayFileWriter = require('../codegen/RelayFileWriter');
 const RelayIRTransforms = require('../core/RelayIRTransforms');
+const RelayLanguagePluginJavaScript = require('../language/javascript/RelayLanguagePluginJavaScript');
 
-const formatGeneratedModule = require('../codegen/formatGeneratedModule');
 const fs = require('fs');
 const path = require('path');
 const yargs = require('yargs');
@@ -47,6 +47,7 @@ const {
 
 import type {GetWriterOptions} from 'graphql-compiler';
 import type {GraphQLSchema} from 'graphql';
+import type {PluginInterface} from '../language/RelayLanguagePluginInterface';
 
 function buildWatchExpression(options: {
   extensions: Array<string>,
@@ -83,6 +84,24 @@ function getFilepathsFromGlob(
   });
 }
 
+function getLanguagePlugin(options: {
+  language: string,
+}): PluginInterface {
+  if (options.language === 'javascript') {
+    return RelayLanguagePluginJavaScript();
+  } else {
+    try {
+      // $FlowFixMe
+      const languagePlugin = __non_webpack_require__(options.language); // eslint-disable-line no-undef
+      if (typeof languagePlugin === 'function') {
+        // For now a plugin doesn’t take any arguments, but may do so in the future.
+        return languagePlugin();
+      }
+    } catch (err) {}
+  }
+  throw new Error(`Unable to load language plugin: ${options.language}`);
+}
+
 async function run(options: {
   schema: string,
   src: string,
@@ -94,6 +113,7 @@ async function run(options: {
   watch?: ?boolean,
   validate: boolean,
   quiet: boolean,
+  language: string,
 }) {
   const schemaPath = path.resolve(process.cwd(), options.schema);
   if (!fs.existsSync(schemaPath)) {
@@ -139,14 +159,20 @@ Ensure that one such file exists in ${srcDir} or its parents.
     exclude: [path.relative(srcDir, schemaPath)].concat(options.exclude),
   };
 
+  const languagePlugin = getLanguagePlugin(options);
+
+  const extensions = options.extensions || languagePlugin.inputExtensions;
+
+  const sourceModuleParser = RelaySourceModuleParser(languagePlugin.findGraphQLTags);
+
   const parserConfigs = {
     js: {
       baseDir: srcDir,
-      getFileFilter: RelayJSModuleParser.getFileFilter,
-      getParser: RelayJSModuleParser.getParser,
+      getFileFilter: sourceModuleParser.getFileFilter,
+      getParser: sourceModuleParser.getParser,
       getSchema: () => schema,
-      watchmanExpression: useWatchman ? buildWatchExpression(options) : null,
-      filepaths: useWatchman ? null : getFilepathsFromGlob(srcDir, options),
+      watchmanExpression: useWatchman ? buildWatchExpression({ ...options, extensions }) : null,
+      filepaths: useWatchman ? null : getFilepathsFromGlob(srcDir, { ...options, extensions }),
     },
     graphql: {
       baseDir: srcDir,
@@ -162,9 +188,9 @@ Ensure that one such file exists in ${srcDir} or its parents.
   };
   const writerConfigs = {
     js: {
-      getWriter: getRelayFileWriter(srcDir),
+      getWriter: getRelayFileWriter(srcDir, languagePlugin),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.js') && filePath.includes('__generated__'),
+        filePath.endsWith('.' + languagePlugin.outputExtension) && filePath.includes('__generated__'),
       parser: 'js',
       baseParsers: ['graphql'],
     },
@@ -193,7 +219,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
   }
 }
 
-function getRelayFileWriter(baseDir: string) {
+function getRelayFileWriter(baseDir: string, languagePlugin: PluginInterface) {
   return ({
     onlyValidate,
     schema,
@@ -213,10 +239,12 @@ function getRelayFileWriter(baseDir: string) {
           queryTransforms,
         },
         customScalars: {},
-        formatModule: formatGeneratedModule,
+        formatModule: languagePlugin.formatModule,
         inputFieldWhiteListForFlow: [],
         schemaExtensions,
         useHaste: false,
+        extension: languagePlugin.outputExtension,
+        typeGenerator: languagePlugin.typeGenerator,
       },
       onlyValidate,
       schema,
@@ -305,8 +333,7 @@ const argv = yargs
     },
     extensions: {
       array: true,
-      default: ['js'],
-      describe: 'File extensions to compile (--extensions js jsx)',
+      describe: 'File extensions to compile (defaults to extensions provided by the language plugin)',
       type: 'string',
     },
     verbose: {
@@ -332,6 +359,11 @@ const argv = yargs
         'writing to disk',
       type: 'boolean',
       default: false,
+    },
+    language: {
+      describe: 'The module name of the language plugin used for input files and artifacts',
+      type: 'string',
+      default: 'javascript',
     },
   })
   .help().argv;
