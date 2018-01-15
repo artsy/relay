@@ -11,7 +11,7 @@
 
 'use strict';
 
-const FindGraphQLTags = require('../codegen/FindGraphQLTags');
+const FindGraphQLTags = require('FindGraphQLTags');
 const GraphQL = require('graphql');
 
 const fs = require('fs');
