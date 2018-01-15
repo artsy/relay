@@ -11,10 +11,10 @@
 
 'use strict';
 
-const RelayCompilerCache = require('../util/RelayCompilerCache');
+const RelayCompilerCache = require('../../util/RelayCompilerCache');
 
 const babylon = require('babylon7');
-const getModuleName = require('../util/getModuleName');
+const getModuleName = require('../../util/getModuleName');
 const graphql = require('graphql');
 const path = require('path');
 const util = require('util');
