@@ -11,7 +11,7 @@
 
 'use strict';
 
-const RelayCompilerCache = require('../util/RelayCompilerCache');
+const RelayCompilerCache = require('../../util/RelayCompilerCache');
 
 const babylon = require('metro-babylon7');
 const getModuleName = require('../util/getModuleName');
