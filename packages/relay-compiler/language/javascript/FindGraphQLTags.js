@@ -22,6 +22,7 @@ const util = require('util');
 const {Profiler} = require('graphql-compiler');
 
 import type {File} from 'graphql-compiler';
+import type {GraphQLTagFinderOptions} from '../RelayLanguagePluginInterface';
 
 // Attempt to be as inclusive as possible of source text.
 const BABYLON_OPTIONS = {
@@ -46,14 +47,10 @@ const BABYLON_OPTIONS = {
   strictMode: false,
 };
 
-type Options = {|
-  validateNames: boolean,
-|};
-
 function find(
   text: string,
   filePath: string,
-  {validateNames}: Options,
+  {validateNames}: GraphQLTagFinderOptions,
 ): Array<string> {
   const result = [];
   const ast = babylon.parse(text, BABYLON_OPTIONS);
@@ -165,7 +162,7 @@ function memoizedFind(
   text: string,
   baseDir: string,
   file: File,
-  options: Options,
+  options: GraphQLTagFinderOptions,
 ): Array<string> {
   invariant(
     file.exists,
