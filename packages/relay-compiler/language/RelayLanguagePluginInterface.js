@@ -26,8 +26,7 @@ export type GraphQLTagFinderOptions = {|
 
 export type GraphQLTagFinder = (
   text: string,
-  baseDir: string,
-  file: File,
+  filePath: string,
   options: GraphQLTagFinderOptions,
 ) => Array<string>;
 

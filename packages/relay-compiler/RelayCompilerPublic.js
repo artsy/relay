@@ -31,7 +31,7 @@ const {
 
 export type {CompileResult, ParserConfig, WriterConfig} from 'graphql-compiler';
 
-const RelayJSModuleParser = RelaySourceModuleParser(FindGraphQLTags.memoizedFind);
+const RelayJSModuleParser = RelaySourceModuleParser(FindGraphQLTags.find);
 
 module.exports = {
   ConsoleReporter,
