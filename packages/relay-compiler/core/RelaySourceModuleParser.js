@@ -17,9 +17,11 @@ const fs = require('fs');
 const invariant = require('invariant');
 const path = require('path');
 
+const RelayCompilerCache = require('../util/RelayCompilerCache');
+
 const {ASTCache, Profiler} = require('graphql-compiler');
 
-import type {GraphQLTagFinder} from '../language/RelayLanguagePluginInterface';
+import type {GraphQLTagFinder, GraphQLTagFinderOptions} from '../language/RelayLanguagePluginInterface';
 import type {File, FileFilter} from 'graphql-compiler';
 import type {DocumentNode} from 'graphql';
 
@@ -30,6 +32,28 @@ const FIND_OPTIONS = {
 };
 
 module.exports = (tagFinder: GraphQLTagFinder) => {
+  const cache = new RelayCompilerCache('RelaySourceModuleParser.memoizedTagFinder', 'v1');
+
+  function memoizedTagFinder(
+    text: string,
+    baseDir: string,
+    file: File,
+    options: GraphQLTagFinderOptions,
+  ): Array<string> {
+    invariant(
+      file.exists,
+      'RelaySourceModuleParser: Called with non-existent file `%s`',
+      file.relPath,
+    );
+    return cache.getOrCompute(
+      file.hash + (options.validateNames ? '1' : '0'),
+      () => {
+        const absPath = path.join(baseDir, file.relPath);
+        return tagFinder(text, absPath, options);
+      },
+    );
+  }
+
   // Throws an error if parsing the file fails
   function parseFile(baseDir: string, file: File): ?DocumentNode {
     const text = fs.readFileSync(path.join(baseDir, file.relPath), 'utf8');
@@ -42,7 +66,7 @@ module.exports = (tagFinder: GraphQLTagFinder) => {
     );
 
     const astDefinitions = [];
-    tagFinder(text, baseDir, file, FIND_OPTIONS).forEach(
+    memoizedTagFinder(text, baseDir, file, FIND_OPTIONS).forEach(
       template => {
         const ast = parseGraphQL(new GraphQL.Source(template, file.relPath));
         invariant(
