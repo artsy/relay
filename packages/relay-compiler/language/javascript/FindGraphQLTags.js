@@ -11,17 +11,13 @@
 
 'use strict';
 
-const RelayCompilerCache = require('../../util/RelayCompilerCache');
-
 const babylon = require('babylon');
 const getModuleName = require('../../util/getModuleName');
 const graphql = require('graphql');
-const path = require('path');
 const util = require('util');
 
 const {Profiler} = require('graphql-compiler');
 
-import type {File} from 'graphql-compiler';
 import type {GraphQLTagFinderOptions} from '../RelayLanguagePluginInterface';
 
 // Attempt to be as inclusive as possible of source text.
@@ -156,23 +152,6 @@ function find(
   return result;
 }
 
-const cache = new RelayCompilerCache('FindGraphQLTags', 'v1');
-
-function memoizedFind(
-  text: string,
-  baseDir: string,
-  file: File,
-  options: GraphQLTagFinderOptions,
-): Array<string> {
-  return cache.getOrCompute(
-    file.hash + (options.validateNames ? '1' : '0'),
-    () => {
-      const absPath = path.join(baseDir, file.relPath);
-      return find(text, absPath, options);
-    },
-  );
-}
-
 const CREATE_CONTAINER_FUNCTIONS = Object.create(null, {
   createFragmentContainer: {value: true},
   createPaginationContainer: {value: true},
@@ -304,5 +283,4 @@ function traverse(node, visitors) {
 
 module.exports = {
   find: Profiler.instrument(find, 'FindGraphQLTags.find'),
-  memoizedFind,
 };

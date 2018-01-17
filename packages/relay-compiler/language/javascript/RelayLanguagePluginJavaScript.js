@@ -13,7 +13,7 @@
 
 const RelayFlowGenerator = require('./RelayFlowGenerator');
 const formatGeneratedModule = require('../../codegen/formatGeneratedModule');
-const {memoizedFind} = require('./FindGraphQLTags');
+const {find} = require('./FindGraphQLTags');
 
 import type { PluginInterface } from '../RelayLanguagePluginInterface';
 
@@ -22,5 +22,5 @@ module.exports = (): PluginInterface => ({
   outputExtension: 'js',
   typeGenerator: RelayFlowGenerator,
   formatModule: formatGeneratedModule,
-  findGraphQLTags: memoizedFind,
+  findGraphQLTags: find,
 });
