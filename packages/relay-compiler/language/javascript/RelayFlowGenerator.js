@@ -43,22 +43,14 @@ const {
   SchemaUtils,
 } = require('graphql-compiler');
 
+import type {TypeGeneratorOptions} from '../RelayLanguagePluginInterface';
 import type {IRTransform, Fragment, Root} from 'graphql-compiler';
 import type {GraphQLEnumType} from 'graphql';
 
 const {isAbstractType} = SchemaUtils;
 
-type Options = {|
-  +customScalars: { [type: string]: string },
-  +useHaste: boolean,
-  +enumsHasteModule: ?string,
-  +existingFragmentNames: Set<string>,
-  +inputFieldWhiteList: $ReadOnlyArray<string>,
-  +relayRuntimeModule: string,
-|};
-
 export type State = {|
-  ...Options,
+  ...TypeGeneratorOptions,
   +generatedFragments: Set<string>,
   +generatedInputObjectTypes: {
     [name: string]: GraphQLInputObjectType | 'pending',
@@ -67,7 +59,7 @@ export type State = {|
   +usedFragments: Set<string>,
 |};
 
-function generate(node: Root | Fragment, options: Options): string {
+function generate(node: Root | Fragment, options: TypeGeneratorOptions): string {
   const ast = IRVisitor.visit(node, createVisitor(options));
   return PatchedBabelGenerator.generate(ast);
 }
@@ -227,7 +219,7 @@ function isPlural(node: Fragment): boolean {
   return Boolean(node.metadata && node.metadata.plural);
 }
 
-function createVisitor(options: Options) {
+function createVisitor(options: TypeGeneratorOptions) {
   const state = {
     customScalars: options.customScalars,
     enumsHasteModule: options.enumsHasteModule,
