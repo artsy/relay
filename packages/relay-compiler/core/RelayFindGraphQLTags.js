@@ -51,7 +51,7 @@ function find(
   absPath: string,
   {validateNames}: GraphQLTagFinderOptions,
 ): Array<string> {
-  const tags = tagFinder(text);
+  const tags = tagFinder(text, absPath);
   if (validateNames) {
     const moduleName = getModuleName(absPath);
     tags.forEach(tag => validateTemplate(tag, moduleName, absPath));

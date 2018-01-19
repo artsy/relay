@@ -19,7 +19,7 @@ const path = require('path');
 
 const {ASTCache, Profiler} = require('graphql-compiler');
 
-const {memoizedFind} = require('./RelayFindGraphQLTags')
+const {memoizedFind} = require('./RelayFindGraphQLTags');
 
 import type {GraphQLTagFinder} from '../language/RelayLanguagePluginInterface';
 import type {File, FileFilter} from 'graphql-compiler';
