@@ -11,14 +11,10 @@
 
 'use strict';
 
-import type {IRTransform, Root, Fragment} from 'graphql-compiler';
-import type {FormatModule} from '../codegen/writeRelayGeneratedFile';
+// TODO T21875029 ../../relay-runtime/util/RelayConcreteNode
+const RelayConcreteNode = require('RelayConcreteNode');
 
-export type TypeGenerator = {
-  transforms: Array<IRTransform>,
-  // For now this is an opaque set of options communicated from the bin to the plugin.
-  generate: (node: Root | Fragment, options: any) => string,
-};
+import type {IRTransform, Root, Fragment} from 'graphql-compiler';
 
 export type GraphQLTag = {
   keyName: ?string,
@@ -35,10 +31,35 @@ export type GraphQLTagFinder = (
   text: string,
 ) => Array<GraphQLTag>;
 
+/**
+ * Generate a module for the given document name/text.
+ */
+export type FormatModule = ({|
+  moduleName: string,
+  documentType:
+    | typeof RelayConcreteNode.FRAGMENT
+    | typeof RelayConcreteNode.REQUEST
+    | typeof RelayConcreteNode.BATCH_REQUEST
+    | null,
+  docText: ?string,
+  concreteText: string,
+  typeText: string,
+  hash: ?string,
+  devOnlyAssignments: ?string,
+  relayRuntimeModule: string,
+  sourceHash: string,
+|}) => string;
+
+export type TypeGenerator = {
+  transforms: Array<IRTransform>,
+  // For now this is an opaque set of options communicated from the bin to the plugin.
+  generate: (node: Root | Fragment, options: any) => string,
+};
+
 export type PluginInterface = {
   inputExtensions: string[],
   outputExtension: string,
-  typeGenerator: TypeGenerator,
-  formatModule: FormatModule,
   findGraphQLTags: GraphQLTagFinder,
+  formatModule: FormatModule,
+  typeGenerator: TypeGenerator,
 };

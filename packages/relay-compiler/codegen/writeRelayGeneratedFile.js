@@ -23,26 +23,8 @@ const {Profiler} = require('graphql-compiler');
 
 // TODO T21875029 ../../relay-runtime/util/RelayConcreteNode
 import type {GeneratedNode} from 'RelayConcreteNode';
+import type {FormatModule} from '../language/RelayLanguagePluginInterface';
 import type {CodegenDirectory} from 'graphql-compiler';
-
-/**
- * Generate a module for the given document name/text.
- */
-export type FormatModule = ({|
-  moduleName: string,
-  documentType:
-    | typeof RelayConcreteNode.FRAGMENT
-    | typeof RelayConcreteNode.REQUEST
-    | typeof RelayConcreteNode.BATCH_REQUEST
-    | null,
-  docText: ?string,
-  concreteText: string,
-  typeText: string,
-  hash: ?string,
-  devOnlyAssignments: ?string,
-  relayRuntimeModule: string,
-  sourceHash: string,
-|}) => string;
 
 async function writeRelayGeneratedFile(
   codegenDir: CodegenDirectory,
