@@ -11,7 +11,7 @@
 
 'use strict';
 
-import type {FormatModule} from './writeRelayGeneratedFile';
+import type {FormatModule} from '../RelayLanguagePluginInterface';
 
 const formatGeneratedModule: FormatModule = ({
   moduleName,

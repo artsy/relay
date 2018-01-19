@@ -20,7 +20,7 @@ const RelayParser = require('./core/RelayParser');
 const FindGraphQLTags = require('./language/javascript/FindGraphQLTags');
 
 const compileRelayArtifacts = require('./codegen/compileRelayArtifacts');
-const formatGeneratedModule = require('./codegen/formatGeneratedModule');
+const formatGeneratedModule = require('./language/javascript/formatGeneratedModule');
 
 const {
   ASTConvert,
