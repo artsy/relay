@@ -29,6 +29,7 @@ export type GraphQLTag = {
 
 export type GraphQLTagFinder = (
   text: string,
+  filePath: string,
 ) => Array<GraphQLTag>;
 
 /**
