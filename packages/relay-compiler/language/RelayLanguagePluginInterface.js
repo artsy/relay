@@ -11,7 +11,7 @@
 
 'use strict';
 
-import type {File, IRTransform, Root, Fragment} from 'graphql-compiler';
+import type {IRTransform, Root, Fragment} from 'graphql-compiler';
 import type {FormatModule} from '../codegen/writeRelayGeneratedFile';
 
 export type TypeGenerator = {
@@ -20,15 +20,20 @@ export type TypeGenerator = {
   generate: (node: Root | Fragment, options: any) => string,
 };
 
-export type GraphQLTagFinderOptions = {|
-  validateNames: boolean,
-|};
+export type GraphQLTag = {
+  keyName: ?string,
+  template: string,
+  sourceLocationOffset: {
+    /* TODO: Is this also expected to yse 1-based index? */
+    line: number,
+    /* Should use 1-based index */
+    column: number,
+  }
+};
 
 export type GraphQLTagFinder = (
   text: string,
-  filePath: string,
-  options: GraphQLTagFinderOptions,
-) => Array<string>;
+) => Array<GraphQLTag>;
 
 export type PluginInterface = {
   inputExtensions: string[],
