@@ -31,8 +31,7 @@ const {
 const {Map: ImmutableMap} = require('immutable');
 
 import type {RelayCompilerTransforms} from './compileRelayArtifacts';
-import type {FormatModule} from './writeRelayGeneratedFile';
-import type {TypeGenerator} from '../language/RelayLanguagePluginInterface';
+import type {FormatModule, TypeGenerator} from '../language/RelayLanguagePluginInterface';
 import type {
   FileWriterInterface,
   Reporter,

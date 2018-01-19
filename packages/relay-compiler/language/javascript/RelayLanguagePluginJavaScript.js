@@ -12,7 +12,7 @@
 'use strict';
 
 const RelayFlowGenerator = require('./RelayFlowGenerator');
-const formatGeneratedModule = require('../../codegen/formatGeneratedModule');
+const formatGeneratedModule = require('./formatGeneratedModule');
 const {find} = require('./FindGraphQLTags');
 
 import type { PluginInterface } from '../RelayLanguagePluginInterface';
