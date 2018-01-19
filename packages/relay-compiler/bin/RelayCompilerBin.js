@@ -93,7 +93,7 @@ function getLanguagePlugin(options: {
   } else {
     try {
       // $FlowFixMe
-      let languagePlugin = __non_webpack_require__(options.language); // eslint-disable-line no-undef
+      let languagePlugin = __non_webpack_require__(`relay-compiler-language-${options.language}`); // eslint-disable-line no-undef
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
@@ -103,7 +103,7 @@ function getLanguagePlugin(options: {
       }
     } catch (err) {}
   }
-  throw new Error(`Unable to load language plugin: ${options.language}`);
+  throw new Error(`Unable to load language plugin: relay-compiler-language-${options.language}`);
 }
 
 async function run(options: {
