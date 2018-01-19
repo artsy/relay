@@ -53,7 +53,7 @@ function getNode(taggedNode) {
   }
   const data: any = fn();
   // Support for languages that work (best) with ES6 modules, such as TypeScript.
-  return data.__esModule ? data.default : data;
+  return data.default ? data.default : data;
 }
 
 function getFragment(taggedNode: GraphQLTaggedNode): ConcreteFragment {
