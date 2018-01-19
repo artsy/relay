@@ -50,10 +50,18 @@ export type FormatModule = ({|
   sourceHash: string,
 |}) => string;
 
+export type TypeGeneratorOptions = {|
+  +customScalars: { [type: string]: string },
+  +useHaste: boolean,
+  +enumsHasteModule: ?string,
+  +existingFragmentNames: Set<string>,
+  +inputFieldWhiteList: $ReadOnlyArray<string>,
+  +relayRuntimeModule: string,
+|};
+
 export type TypeGenerator = {
   transforms: Array<IRTransform>,
-  // For now this is an opaque set of options communicated from the bin to the plugin.
-  generate: (node: Root | Fragment, options: any) => string,
+  generate: (node: Root | Fragment, options: TypeGeneratorOptions) => string,
 };
 
 export type PluginInterface = {
