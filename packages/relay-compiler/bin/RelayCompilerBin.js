@@ -93,7 +93,10 @@ function getLanguagePlugin(options: {
   } else {
     try {
       // $FlowFixMe
-      const languagePlugin = __non_webpack_require__(options.language); // eslint-disable-line no-undef
+      let languagePlugin = __non_webpack_require__(options.language); // eslint-disable-line no-undef
+      if (languagePlugin.default) {
+        languagePlugin = languagePlugin.default;
+      }
       if (typeof languagePlugin === 'function') {
         // For now a plugin doesn’t take any arguments, but may do so in the future.
         return languagePlugin();
