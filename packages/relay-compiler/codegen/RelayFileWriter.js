@@ -283,7 +283,7 @@ class RelayFileWriter implements FileWriterInterface {
               inputFieldWhiteList: this._config.inputFieldWhiteListForFlow,
               relayRuntimeModule,
               useHaste: this._config.useHaste,
-              outputDir: this._config.outputDir,
+              useSingleArtifactDirectory: !!this._config.outputDir,
             });
 
             const sourceHash = Profiler.run('hashGraphQL', () =>
