@@ -150,17 +150,6 @@ Ensure that one such file exists in ${srcDir} or its parents.
     );
   }
 
-  const babelConfigPath = path.resolve(process.cwd(), '.babelrc');
-  if (!options.artifactDirectory && fs.existsSync(babelConfigPath)) {
-    const babelConfig = JSON.parse(fs.readFileSync(babelConfigPath, 'utf8'));
-    const plugin = babelConfig.plugins && babelConfig.plugins.find(
-      plugin => Array.isArray(plugin) && plugin[0] === 'relay',
-    );
-    if (plugin) {
-      options.artifactDirectory = plugin[1].artifactDirectory;
-    }
-  }
-
   const reporter = new ConsoleReporter({verbose: options.verbose});
 
   const useWatchman = options.watchman && (await WatchmanClient.isAvailable());
@@ -377,8 +366,7 @@ const argv = yargs
     artifactDirectory: {
       describe:
         'A specific directory to output all artifacts to. When enabling this ' +
-        'the babel plugin needs `artifactDirectory` set as well. (Defaults ' +
-        'to the directory set on the babel plugin.)',
+        'the babel plugin needs `artifactDirectory` set as well.',
       type: 'string',
       default: null,
     },
