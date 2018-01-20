@@ -15,7 +15,7 @@ const RelayFlowGenerator = require('./RelayFlowGenerator');
 const formatGeneratedModule = require('./formatGeneratedModule');
 const {find} = require('./FindGraphQLTags');
 
-import type { PluginInterface } from '../RelayLanguagePluginInterface';
+import type {PluginInterface} from '../RelayLanguagePluginInterface';
 
 module.exports = (): PluginInterface => ({
   inputExtensions: ['js', 'jsx'],
