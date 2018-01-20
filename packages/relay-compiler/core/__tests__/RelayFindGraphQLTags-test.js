@@ -16,7 +16,11 @@ const FindGraphQLTags = require('FindGraphQLTags');
 import type {GraphQLTagFinderOptions} from 'RelayFindGraphQLTags';
 
 describe('RelayFindGraphQLTags', () => {
-  function find(text, options: GraphQLTagFinderOptions, absPath: string = '/path/to/FindGraphQLTags.js') {
+  function find(
+    text,
+    options: GraphQLTagFinderOptions,
+    absPath: string = '/path/to/FindGraphQLTags.js',
+  ) {
     return RelayFindGraphQLTags.find(
       FindGraphQLTags.find,
       text,
@@ -36,7 +40,7 @@ describe('RelayFindGraphQLTags', () => {
             '    id\n' +
             '  }\n' +
             '`);\n',
-          {validateNames: true}
+          {validateNames: true},
         );
       }).toThrow('Syntax Error: Cannot parse the unexpected character "?".');
     });
@@ -45,10 +49,9 @@ describe('RelayFindGraphQLTags', () => {
   describe('query name validation', () => {
     it('throws for invalid query names', () => {
       expect(() =>
-        find(
-          'graphql`query NotModuleName { me { id } }`;',
-          {validateNames: true},
-        ),
+        find('graphql`query NotModuleName { me { id } }`;', {
+          validateNames: true,
+        }),
       ).toThrow(
         'FindGraphQLTags: Operation names in graphql tags must be prefixed with ' +
           'the module name and end in "Mutation", "Query", or "Subscription". ' +
@@ -57,18 +60,16 @@ describe('RelayFindGraphQLTags', () => {
     });
 
     it('does not validate names when options is not set', () => {
-      find(
-        'graphql`query NotModuleName { me { id } }`;',
-        {validateNames: false},
-      );
+      find('graphql`query NotModuleName { me { id } }`;', {
+        validateNames: false,
+      });
     });
 
     it('parses queries with valid names', () => {
       expect(
-        find(
-          'graphql`query FindGraphQLTagsQuery { me { id } }`;',
-          {validateNames: true},
-        ),
+        find('graphql`query FindGraphQLTagsQuery { me { id } }`;', {
+          validateNames: true,
+        }),
       ).toEqual(['query FindGraphQLTagsQuery { me { id } }']);
     });
 
@@ -105,10 +106,9 @@ describe('RelayFindGraphQLTags', () => {
 
     it('throws for invalid top-level fragment names', () => {
       expect(() =>
-        find(
-          'graphql`fragment NotModuleName on User { name }`;',
-          {validateNames: true},
-        ),
+        find('graphql`fragment NotModuleName on User { name }`;', {
+          validateNames: true,
+        }),
       ).toThrow(
         'FindGraphQLTags: Fragment names in graphql tags ' +
           'must be prefixed with the module name. Got ' +
@@ -118,20 +118,22 @@ describe('RelayFindGraphQLTags', () => {
 
     it('parses top-level fragments with valid names', () => {
       expect(
-        find(
-          'graphql`fragment FindGraphQLTags on User { name }`;',
-          {validateNames: true},
-        ),
+        find('graphql`fragment FindGraphQLTags on User { name }`;', {
+          validateNames: true,
+        }),
       ).toEqual(['fragment FindGraphQLTags on User { name }']);
     });
 
     it('throws for invalid container fragment names', () => {
       expect(() =>
-        find(`
+        find(
+          `
           createFragmentContainer(Foo, {
             foo: graphql\`fragment FindGraphQLTags_notFoo on User { name }\`,
           });
-        `, {validateNames: true}),
+        `,
+          {validateNames: true},
+        ),
       ).toThrow(
         'FindGraphQLTags: Container fragment names must be ' +
           '`<ModuleName>_<propName>`. Got `FindGraphQLTags_notFoo`, expected ' +
@@ -141,11 +143,14 @@ describe('RelayFindGraphQLTags', () => {
 
     it('parses container fragments with valid names', () => {
       expect(
-        find(`
+        find(
+          `
           createFragmentContainer(Foo, {
             foo: graphql\`fragment FindGraphQLTags_foo on User { name }\`,
           });
-        `, {validateNames: true}),
+        `,
+          {validateNames: true},
+        ),
       ).toEqual(['fragment FindGraphQLTags_foo on User { name }']);
     });
   });
