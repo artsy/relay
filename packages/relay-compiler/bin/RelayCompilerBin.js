@@ -85,15 +85,15 @@ function getFilepathsFromGlob(
   });
 }
 
-function getLanguagePlugin(options: {
-  language: string,
-}): PluginInterface {
+function getLanguagePlugin(options: {language: string}): PluginInterface {
   if (options.language === 'javascript') {
     return RelayLanguagePluginJavaScript();
   } else {
     try {
       // $FlowFixMe
-      let languagePlugin = __non_webpack_require__(`relay-compiler-language-${options.language}`); // eslint-disable-line no-undef
+      let languagePlugin = __non_webpack_require__(
+        `relay-compiler-language-${options.language}`,
+      ); // eslint-disable-line no-undef
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
@@ -103,7 +103,11 @@ function getLanguagePlugin(options: {
       }
     } catch (err) {}
   }
-  throw new Error(`Unable to load language plugin: relay-compiler-language-${options.language}`);
+  throw new Error(
+    `Unable to load language plugin: relay-compiler-language-${
+      options.language
+    }`,
+  );
 }
 
 async function run(options: {
@@ -153,7 +157,9 @@ Ensure that one such file exists in ${srcDir} or its parents.
 
   const extensions = options.extensions || languagePlugin.inputExtensions;
 
-  const sourceModuleParser = RelaySourceModuleParser(languagePlugin.findGraphQLTags);
+  const sourceModuleParser = RelaySourceModuleParser(
+    languagePlugin.findGraphQLTags,
+  );
 
   const parserConfigs = {
     default: {
@@ -161,15 +167,20 @@ Ensure that one such file exists in ${srcDir} or its parents.
       getFileFilter: sourceModuleParser.getFileFilter,
       getParser: sourceModuleParser.getParser,
       getSchema: () => getSchema(schemaPath),
-      watchmanExpression: useWatchman ? buildWatchExpression({ ...options, extensions }) : null,
-      filepaths: useWatchman ? null : getFilepathsFromGlob(srcDir, { ...options, extensions }),
+      watchmanExpression: useWatchman
+        ? buildWatchExpression({...options, extensions})
+        : null,
+      filepaths: useWatchman
+        ? null
+        : getFilepathsFromGlob(srcDir, {...options, extensions}),
     },
   };
   const writerConfigs = {
     default: {
       getWriter: getRelayFileWriter(srcDir, languagePlugin, options.outputDir),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.' + languagePlugin.outputExtension) && filePath.includes('__generated__'),
+        filePath.endsWith('.' + languagePlugin.outputExtension) &&
+        filePath.includes('__generated__'),
       parser: 'default',
     },
   };
@@ -197,7 +208,11 @@ Ensure that one such file exists in ${srcDir} or its parents.
   }
 }
 
-function getRelayFileWriter(baseDir: string, languagePlugin: PluginInterface, outputDir?: ?string) {
+function getRelayFileWriter(
+  baseDir: string,
+  languagePlugin: PluginInterface,
+  outputDir?: ?string,
+) {
   return ({
     onlyValidate,
     schema,
@@ -279,9 +294,9 @@ function hasWatchmanRootFile(testPath) {
 // Collect args
 const argv = yargs
   .usage(
-  'Create Relay generated files\n\n' +
-  '$0 --schema <path> --src <path> [--watch]',
-)
+    'Create Relay generated files\n\n' +
+      '$0 --schema <path> --src <path> [--watch]',
+  )
   .options({
     schema: {
       describe: 'Path to schema.graphql or schema.json',
@@ -312,7 +327,8 @@ const argv = yargs
     },
     extensions: {
       array: true,
-      describe: 'File extensions to compile (defaults to extensions provided by the language plugin)',
+      describe:
+        'File extensions to compile (defaults to extensions provided by the language plugin)',
       type: 'string',
     },
     verbose: {
@@ -336,12 +352,14 @@ const argv = yargs
       default: false,
     },
     language: {
-      describe: 'The module name of the language plugin used for input files and artifacts',
+      describe:
+        'The module name of the language plugin used for input files and artifacts',
       type: 'string',
       default: 'javascript',
     },
     outputDir: {
-      describe: 'An optional directory to output all artifacts to. When enabling this, additional configuration of the babel plugin needs to reflect this.',
+      describe:
+        'An optional directory to output all artifacts to. When enabling this, additional configuration of the babel plugin needs to reflect this.',
       type: 'string',
       default: null,
     },
