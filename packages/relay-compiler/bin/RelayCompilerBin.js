@@ -90,10 +90,11 @@ function getLanguagePlugin(options: {language: string}): PluginInterface {
     return RelayLanguagePluginJavaScript();
   } else {
     try {
+      // prettier-ignore
       // $FlowFixMe
-      let languagePlugin = __non_webpack_require__(
+      let languagePlugin = __non_webpack_require__( // eslint-disable-line no-undef
         `relay-compiler-language-${options.language}`,
-      ); // eslint-disable-line no-undef
+      );
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
