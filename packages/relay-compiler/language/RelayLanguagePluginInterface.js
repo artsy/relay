@@ -58,6 +58,7 @@ export type TypeGeneratorOptions = {|
   +existingFragmentNames: Set<string>,
   +inputFieldWhiteList: $ReadOnlyArray<string>,
   +relayRuntimeModule: string,
+  +outputDir?: ?string,
 |};
 
 export type TypeGenerator = {
