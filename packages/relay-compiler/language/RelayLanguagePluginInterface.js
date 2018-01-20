@@ -58,7 +58,7 @@ export type TypeGeneratorOptions = {|
   +existingFragmentNames: Set<string>,
   +inputFieldWhiteList: $ReadOnlyArray<string>,
   +relayRuntimeModule: string,
-  +outputDir?: ?string,
+  +useSingleArtifactDirectory: boolean,
 |};
 
 export type TypeGenerator = {
