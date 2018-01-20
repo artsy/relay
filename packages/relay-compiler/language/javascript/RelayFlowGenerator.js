@@ -226,6 +226,7 @@ function createVisitor(options: TypeGeneratorOptions) {
     usedEnums: {},
     usedFragments: new Set(),
     useHaste: options.useHaste,
+    outputDir: options.outputDir,
   };
 
   return {
@@ -405,6 +406,8 @@ function getFragmentImports(state: State) {
           // TODO(T22653277) support non-haste environments when importing
           // fragments
           imports.push(importTypes([refTypeName], usedFragment + '.graphql'));
+        } else if (state.outputDir != null && state.existingFragmentNames.has(usedFragment)) {
+          imports.push(importTypes([refTypeName], './' + usedFragment + '.graphql'));
         } else {
           imports.push(anyTypeAlias(refTypeName));
         }

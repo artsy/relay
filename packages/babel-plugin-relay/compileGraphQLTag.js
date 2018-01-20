@@ -85,6 +85,7 @@ function createAST(t, state, path, graphqlDefinition) {
   const isCompatMode = Boolean(state.opts && state.opts.compat);
   const isHasteMode = Boolean(state.opts && state.opts.haste);
   const isDevVariable = state.opts && state.opts.isDevVariable;
+  const artifactDirectory = state.opts && state.opts.artifactDirectory;
   const buildCommand =
     (state.opts && state.opts.buildCommand) || 'relay-compiler';
 
@@ -92,7 +93,8 @@ function createAST(t, state, path, graphqlDefinition) {
   const isDevelopment =
     (process.env.BABEL_ENV || process.env.NODE_ENV) !== 'production';
 
-  const modernNode = createModernNode(t, graphqlDefinition, {
+  const modernNode = createModernNode(t, graphqlDefinition, state, {
+    artifactDirectory,
     buildCommand,
     isDevelopment,
     isHasteMode,
