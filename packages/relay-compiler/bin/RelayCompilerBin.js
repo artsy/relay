@@ -122,7 +122,7 @@ async function run(options: {
   validate: boolean,
   quiet: boolean,
   language: string,
-  outputDir?: ?string,
+  artifactDirectory?: ?string,
 }) {
   const schemaPath = path.resolve(process.cwd(), options.schema);
   if (!fs.existsSync(schemaPath)) {
@@ -203,7 +203,11 @@ Ensure that one such file exists in ${srcDir} or its parents.
   };
   const writerConfigs = {
     js: {
-      getWriter: getRelayFileWriter(srcDir, languagePlugin, options.outputDir),
+      getWriter: getRelayFileWriter(
+        srcDir,
+        languagePlugin,
+        options.artifactDirectory,
+      ),
       isGeneratedFile: (filePath: string) =>
         filePath.endsWith('.' + languagePlugin.outputExtension) &&
         filePath.includes('__generated__'),
@@ -265,7 +269,7 @@ function getRelayFileWriter(
         useHaste: false,
         extension: languagePlugin.outputExtension,
         typeGenerator: languagePlugin.typeGenerator,
-        outputDir: outputDir,
+        outputDir,
       },
       onlyValidate,
       schema,
@@ -355,7 +359,8 @@ const argv = yargs
     extensions: {
       array: true,
       describe:
-        'File extensions to compile (defaults to extensions provided by the language plugin)',
+        'File extensions to compile (defaults to extensions provided by the ' +
+        'language plugin)',
       type: 'string',
     },
     verbose: {
@@ -384,13 +389,14 @@ const argv = yargs
     },
     language: {
       describe:
-        'The module name of the language plugin used for input files and artifacts',
+        'The name of the language plugin used for input files and artifacts',
       type: 'string',
       default: 'javascript',
     },
-    outputDir: {
+    artifactDirectory: {
       describe:
-        'An optional directory to output all artifacts to. When enabling this, additional configuration of the babel plugin needs to reflect this.',
+        'A specific directory to output all artifacts to. When enabling this ' +
+        'the babel plugin needs `artifactDirectory` set as well.',
       type: 'string',
       default: null,
     },
