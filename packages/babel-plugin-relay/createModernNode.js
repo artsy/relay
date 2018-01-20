@@ -12,7 +12,6 @@
 'use strict';
 
 const crypto = require('crypto');
-const fs = require('fs');
 const path = require('path');
 
 const {print} = require('graphql');
@@ -131,7 +130,8 @@ function getRelativeImportPath(
     path.resolve(artifactDirectory),
   );
 
-  const relativeReference = relative.length === 0 ? './' : '';
+  const relativeReference =
+    relative.length === 0 || !relative.startsWith('.') ? './' : '';
 
   return relativeReference + path.join(relative, fileToRequire);
 }
