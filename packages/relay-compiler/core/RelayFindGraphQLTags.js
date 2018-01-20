@@ -19,7 +19,10 @@ const RelayCompilerCache = require('../util/RelayCompilerCache');
 const getModuleName = require('../util/getModuleName');
 
 import type {File} from 'graphql-compiler';
-import type {GraphQLTag, GraphQLTagFinder} from '../language/RelayLanguagePluginInterface';
+import type {
+  GraphQLTag,
+  GraphQLTagFinder,
+} from '../language/RelayLanguagePluginInterface';
 
 export type GraphQLTagFinderOptions = {|
   validateNames: boolean,
@@ -59,8 +62,14 @@ function find(
   return tags.map(tag => tag.template);
 }
 
-function validateTemplate({template, keyName, sourceLocationOffset}: GraphQLTag,  moduleName: string, filePath: string) {
-  const ast = graphql.parse(new graphql.Source(template, filePath, sourceLocationOffset));
+function validateTemplate(
+  {template, keyName, sourceLocationOffset}: GraphQLTag,
+  moduleName: string,
+  filePath: string,
+) {
+  const ast = graphql.parse(
+    new graphql.Source(template, filePath, sourceLocationOffset),
+  );
   ast.definitions.forEach((def: any) => {
     invariant(
       def.name,

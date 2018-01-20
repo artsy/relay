@@ -55,7 +55,10 @@ export type State = {|
   +usedFragments: Set<string>,
 |};
 
-function generate(node: Root | Fragment, options: TypeGeneratorOptions): string {
+function generate(
+  node: Root | Fragment,
+  options: TypeGeneratorOptions,
+): string {
   const ast = IRVisitor.visit(node, createVisitor(options));
   return PatchedBabelGenerator.generate(ast);
 }
@@ -406,8 +409,13 @@ function getFragmentImports(state: State) {
           // TODO(T22653277) support non-haste environments when importing
           // fragments
           imports.push(importTypes([refTypeName], usedFragment + '.graphql'));
-        } else if (state.outputDir != null && state.existingFragmentNames.has(usedFragment)) {
-          imports.push(importTypes([refTypeName], './' + usedFragment + '.graphql'));
+        } else if (
+          state.outputDir != null &&
+          state.existingFragmentNames.has(usedFragment)
+        ) {
+          imports.push(
+            importTypes([refTypeName], './' + usedFragment + '.graphql'),
+          );
         } else {
           imports.push(anyTypeAlias(refTypeName));
         }
