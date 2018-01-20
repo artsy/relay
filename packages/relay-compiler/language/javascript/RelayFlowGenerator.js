@@ -229,7 +229,7 @@ function createVisitor(options: TypeGeneratorOptions) {
     usedEnums: {},
     usedFragments: new Set(),
     useHaste: options.useHaste,
-    outputDir: options.outputDir,
+    useSingleArtifactDirectory: options.useSingleArtifactDirectory,
   };
 
   return {
@@ -410,7 +410,7 @@ function getFragmentImports(state: State) {
           // fragments
           imports.push(importTypes([refTypeName], usedFragment + '.graphql'));
         } else if (
-          state.outputDir != null &&
+          state.useSingleArtifactDirectory &&
           state.existingFragmentNames.has(usedFragment)
         ) {
           imports.push(
