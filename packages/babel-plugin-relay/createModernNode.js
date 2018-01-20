@@ -53,7 +53,9 @@ function createModernNode(
   const requiredFile = definitionName + '.graphql';
   const requiredPath = options.isHasteMode
     ? requiredFile
-    : (options.artifactDirectory ? getRelativeImportPath(state, options.artifactDirectory, requiredFile) : GENERATED + requiredFile);
+    : options.artifactDirectory
+      ? getRelativeImportPath(state, options.artifactDirectory, requiredFile)
+      : GENERATED + requiredFile;
 
   const hash = crypto
     .createHash('md5')
@@ -116,11 +118,18 @@ function warnNeedsRebuild(
   );
 }
 
-function getRelativeImportPath(state: BabelState, artifactDirectory: string, fileToRequire: string): string {
+function getRelativeImportPath(
+  state: BabelState,
+  artifactDirectory: string,
+  fileToRequire: string,
+): string {
   invariant(state.file != null, 'babel state file is null');
   const filename = state.file.opts.filename;
 
-  const relative = path.relative(path.dirname(filename), path.resolve(artifactDirectory));
+  const relative = path.relative(
+    path.dirname(filename),
+    path.resolve(artifactDirectory),
+  );
 
   const relativeReference = relative.length === 0 ? './' : '';
 

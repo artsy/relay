@@ -41,9 +41,7 @@ const BABYLON_OPTIONS = {
   strictMode: false,
 };
 
-function find(
-  text: string,
-): Array<GraphQLTag> {
+function find(text: string): Array<GraphQLTag> {
   const result: Array<GraphQLTag> = [];
   const ast = babylon.parse(text, BABYLON_OPTIONS);
 

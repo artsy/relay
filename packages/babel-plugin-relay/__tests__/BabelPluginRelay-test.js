@@ -87,9 +87,13 @@ describe('BabelPluginRelay', () => {
 
   generateTestsFromFixtures(
     `${__dirname}/fixtures-modern-artifact-directory`,
-    transformerWithOptions({
-      artifactDirectory: '/test/artifacts',
-    }, 'production', '/testing/Container.js'),
+    transformerWithOptions(
+      {
+        artifactDirectory: '/test/artifacts',
+      },
+      'production',
+      '/testing/Container.js',
+    ),
   );
 
   describe('`development` option', () => {

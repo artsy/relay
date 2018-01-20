@@ -24,7 +24,7 @@ export type GraphQLTag = {
     line: number,
     /* Should use 1-based index */
     column: number,
-  }
+  },
 };
 
 export type GraphQLTagFinder = (
@@ -52,7 +52,7 @@ export type FormatModule = ({|
 |}) => string;
 
 export type TypeGeneratorOptions = {|
-  +customScalars: { [type: string]: string },
+  +customScalars: {[type: string]: string},
   +useHaste: boolean,
   +enumsHasteModule: ?string,
   +existingFragmentNames: Set<string>,
