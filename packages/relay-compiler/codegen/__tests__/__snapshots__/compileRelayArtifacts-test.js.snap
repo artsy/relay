@@ -102,8 +102,16 @@ type Foo implements Named {
             "kind": "FragmentSpread",
             "name": "OnlyClientFields",
             "args": null
+          },
+          {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -149,7 +157,8 @@ type Foo implements Named {
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -163,12 +172,18 @@ query BestFriendsQuery(
   node(id: $id) {
     __typename
     ...BestFriends
+    ...OnlyClientFields
     id
   }
 }
 
 fragment BestFriends on User {
   ...NodeFragment
+  id
+}
+
+fragment OnlyClientFields on User {
+  id
 }
 
 fragment NodeFragment on Node {
@@ -200,8 +215,16 @@ fragment NodeFragment on Node {
           "storageKey": null
         }
       ]
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -257,7 +280,8 @@ fragment NodeFragment on Node {
                   "args": null,
                   "storageKey": null
                 }
-              ]
+              ],
+              "idField": "id"
             }
           ]
         },
@@ -287,6 +311,13 @@ fragment NodeFragment on Node {
       "args": null
     },
     {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
+    },
+    {
       "kind": "InlineFragment",
       "type": "Foo",
       "selections": [
@@ -299,7 +330,8 @@ fragment NodeFragment on Node {
         }
       ]
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -316,7 +348,8 @@ fragment NodeFragment on Node {
       "args": null,
       "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -509,11 +542,19 @@ query NodeQuery($id: ID!) {
                                           {
                                             "kind": "ScalarField",
                                             "alias": null,
+                                            "name": "id",
+                                            "args": null,
+                                            "storageKey": null
+                                          },
+                                          {
+                                            "kind": "ScalarField",
+                                            "alias": null,
                                             "name": "__typename",
                                             "args": null,
                                             "storageKey": null
                                           }
-                                        ]
+                                        ],
+                                        "idField": "id"
                                       },
                                       {
                                         "kind": "ScalarField",
@@ -550,8 +591,23 @@ query NodeQuery($id: ID!) {
                                     ]
                                   }
                                 ]
+                              },
+                              {
+                                "kind": "ScalarField",
+                                "alias": null,
+                                "name": "id",
+                                "args": null,
+                                "storageKey": null
                               }
-                            ]
+                            ],
+                            "idField": "id"
+                          },
+                          {
+                            "kind": "ScalarField",
+                            "alias": null,
+                            "name": "id",
+                            "args": null,
+                            "storageKey": null
                           },
                           {
                             "kind": "ScalarField",
@@ -560,7 +616,8 @@ query NodeQuery($id: ID!) {
                             "args": null,
                             "storageKey": null
                           }
-                        ]
+                        ],
+                        "idField": "id"
                       },
                       {
                         "kind": "ScalarField",
@@ -600,7 +657,8 @@ query NodeQuery($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -762,7 +820,8 @@ query NodeQuery($id: ID!) {
                                             "args": null,
                                             "storageKey": null
                                           }
-                                        ]
+                                        ],
+                                        "idField": "id"
                                       },
                                       {
                                         "kind": "ScalarField",
@@ -823,7 +882,8 @@ query NodeQuery($id: ID!) {
                                 "args": null,
                                 "storageKey": null
                               }
-                            ]
+                            ],
+                            "idField": "id"
                           },
                           {
                             "kind": "ScalarField",
@@ -839,7 +899,8 @@ query NodeQuery($id: ID!) {
                             "args": null,
                             "storageKey": null
                           }
-                        ]
+                        ],
+                        "idField": "id"
                       },
                       {
                         "kind": "ScalarField",
@@ -895,7 +956,8 @@ query NodeQuery($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -1075,7 +1137,8 @@ fragment UserFragment on User @argumentDefinitions(
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -1288,7 +1351,8 @@ fragment UserFragment on User @argumentDefinitions(
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -1532,7 +1596,8 @@ fragment UserFragment_3M2EvT on User {
         }
       ]
     }
-  ]
+  ],
+  "idField": "id"
 }
 `;
 
@@ -1586,6 +1651,13 @@ query LinkedHandleField($id: ID!) {
         "plural": false,
         "selections": [
           {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
+          },
+          {
             "kind": "InlineFragment",
             "type": "User",
             "selections": [
@@ -1609,7 +1681,8 @@ query LinkedHandleField($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -1702,7 +1775,8 @@ query LinkedHandleField($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -1748,8 +1822,16 @@ fragment PluralFragment on User @relay(plural: true) {
       "name": "name",
       "args": null,
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 `;
 
@@ -1801,6 +1883,13 @@ query ScalarHandleField($id: ID!) {
         "plural": false,
         "selections": [
           {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
+          },
+          {
             "kind": "InlineFragment",
             "type": "User",
             "selections": [
@@ -1813,7 +1902,8 @@ query ScalarHandleField($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -1881,7 +1971,8 @@ query ScalarHandleField($id: ID!) {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -1943,16 +2034,16 @@ query UnionQuery {
         "plural": false,
         "selections": [
           {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
+          },
+          {
             "kind": "InlineFragment",
             "type": "Story",
             "selections": [
-              {
-                "kind": "ScalarField",
-                "alias": null,
-                "name": "id",
-                "args": null,
-                "storageKey": null
-              },
               {
                 "kind": "LinkedField",
                 "alias": null,
@@ -1986,7 +2077,8 @@ query UnionQuery {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -2055,7 +2147,8 @@ query UnionQuery {
               }
             ]
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -2193,8 +2286,16 @@ fragment UserUtil2_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -2223,8 +2324,16 @@ fragment UserUtil2_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 `;
 
@@ -2291,8 +2400,16 @@ fragment UserUtil_user on User {
             "kind": "FragmentSpread",
             "name": "UserProfile_user",
             "args": null
+          },
+          {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -2376,7 +2493,8 @@ fragment UserUtil_user on User {
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -2400,6 +2518,7 @@ fragment UserProfile_user on User {
     height
   }
   url(relative: $isRelative)
+  id
 }
 
 
@@ -2466,8 +2585,16 @@ fragment UserProfile_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -2496,8 +2623,16 @@ fragment UserProfile_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 `;
 
@@ -2576,8 +2711,16 @@ fragment UserUtil2_user on User {
             "kind": "FragmentSpread",
             "name": "UserProfile_user",
             "args": null
+          },
+          {
+            "kind": "ScalarField",
+            "alias": null,
+            "name": "id",
+            "args": null,
+            "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   },
@@ -2681,7 +2824,8 @@ fragment UserUtil2_user on User {
             "args": null,
             "storageKey": null
           }
-        ]
+        ],
+        "idField": "id"
       }
     ]
   }
@@ -2707,6 +2851,7 @@ fragment UserProfile_user on User {
     height
   }
   url(relative: $isRelative)
+  id
 }
 
 
@@ -2792,8 +2937,16 @@ fragment UserProfile_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -2859,8 +3012,16 @@ fragment UserProfile_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 
 {
@@ -2889,8 +3050,16 @@ fragment UserProfile_user on User {
         }
       ],
       "storageKey": null
+    },
+    {
+      "kind": "ScalarField",
+      "alias": null,
+      "name": "id",
+      "args": null,
+      "storageKey": null
     }
-  ]
+  ],
+  "idField": "id"
 }
 `;
 
@@ -2943,7 +3112,8 @@ query ViewerQuery {
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
           }
         ]
       }
@@ -2986,7 +3156,8 @@ query ViewerQuery {
                 "args": null,
                 "storageKey": null
               }
-            ]
+            ],
+            "idField": "id"
           }
         ]
       },

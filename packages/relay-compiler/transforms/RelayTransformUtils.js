@@ -11,10 +11,13 @@
 
 'use strict';
 
-import type {LinkedField} from 'graphql-compiler';
+import type {Fragment, LinkedField} from 'graphql-compiler';
 
-function hasUnaliasedSelection(field: LinkedField, fieldName: string): boolean {
-  return field.selections.some(
+function getUnaliasedSelectionIndex(
+  node: Fragment | LinkedField,
+  fieldName: string,
+): number {
+  return node.selections.findIndex(
     selection =>
       selection.kind === 'ScalarField' &&
       selection.alias == null &&
@@ -22,4 +25,8 @@ function hasUnaliasedSelection(field: LinkedField, fieldName: string): boolean {
   );
 }
 
-module.exports = {hasUnaliasedSelection};
+function hasUnaliasedSelection(field: LinkedField, fieldName: string): boolean {
+  return getUnaliasedSelectionIndex(field, fieldName) !== -1;
+}
+
+module.exports = {getUnaliasedSelectionIndex, hasUnaliasedSelection};

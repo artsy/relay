@@ -53,6 +53,16 @@ function generate(node: Batch | Fragment): RequestNode | ConcreteFragment {
 }
 
 const RelayCodeGenVisitor = {
+  enter(node) {
+    if (node.kind === 'Fragment' || node.kind === 'LinkedField') {
+      const selections = flattenArray(node.selections);
+      const idFieldSelection = selections.find(
+        selection => selection.metadata && selection.metadata.isDataID,
+      );
+      node.idField = idFieldSelection && idFieldSelection.name;
+    }
+    return node;
+  },
   leave: {
     Batch(node): RequestNode {
       invariant(node.requests.length !== 0, 'Batch must contain Requests.');
@@ -128,6 +138,7 @@ const RelayCodeGenVisitor = {
         metadata: node.metadata || null,
         argumentDefinitions: node.argumentDefinitions,
         selections: flattenArray(node.selections),
+        idField: node.idField,
       };
     },
 
@@ -216,6 +227,7 @@ const RelayCodeGenVisitor = {
         concreteType: !isAbstractType(type) ? type.toString() : null,
         plural: isPlural(node.type),
         selections: flattenArray(node.selections),
+        idField: node.idField,
       };
       // Precompute storageKey if possible
       field.storageKey = getStaticStorageKey(field);

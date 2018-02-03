@@ -18,6 +18,7 @@ const {
   assertAbstractType,
   getNamedType,
   getNullableType,
+  isInterfaceType,
   isType,
   print,
   typeFromAST,
@@ -32,6 +33,7 @@ import type {
   ASTNode,
   GraphQLCompositeType,
   GraphQLEnumType,
+  GraphQLField,
   GraphQLInputObjectType,
   GraphQLNamedType,
   GraphQLNonNull,
@@ -42,6 +44,7 @@ import type {
 
 const ID = 'id';
 const ID_TYPE = 'ID';
+const NODE_TYPE = 'Node';
 
 type GraphQLSingularType =
   | GraphQLScalarType
@@ -77,27 +80,6 @@ function canHaveSelections(type: GraphQLType): boolean {
   return (
     type instanceof GraphQLObjectType || type instanceof GraphQLInterfaceType
   );
-}
-
-/**
- * Implements duck typing that checks whether a type has an id field of the ID
- * type. This is approximating what we can hopefully do with the __id proposal
- * a bit more cleanly.
- *
- * https://github.com/graphql/graphql-future/blob/master/01%20-%20__id.md
- */
-function hasID(schema: GraphQLSchema, type: GraphQLCompositeType): boolean {
-  const unmodifiedType = getRawType(type);
-  invariant(
-    unmodifiedType instanceof GraphQLObjectType ||
-      unmodifiedType instanceof GraphQLInterfaceType,
-    'GraphQLSchemaUtils.hasID(): Expected a concrete type or interface, ' +
-      'got type `%s`.',
-    type,
-  );
-  const idType = schema.getType(ID_TYPE);
-  const idField = unmodifiedType.getFields()[ID];
-  return idField && getRawType(idField.type) === idType;
 }
 
 /**
@@ -242,14 +224,68 @@ function getTypeFromAST(schema: GraphQLSchema, ast: TypeNode): GraphQLType {
   return (type: any);
 }
 
+function getNodeIDFieldDefinition(schema: GraphQLSchema): ?GraphQLField<*, *> {
+  const iface = schema.getType(NODE_TYPE);
+  if (isInterfaceType(iface)) {
+    const idType = schema.getType(ID_TYPE);
+    const fields = [];
+    const allFields = iface.getFields();
+    for (const fieldName in allFields) {
+      const field = allFields[fieldName];
+      if (getNullableType(field.type) === idType) {
+        fields.push(field);
+      }
+    }
+    invariant(
+      fields.length === 1,
+      'GraphQLSchemaUtils.getNodeIDFieldDefinition(): Expected the Node interface to have one field of type `ID!`, ' +
+        'but found %s.',
+      fields.length === 0
+        ? 'none'
+        : fields.map(field => `\`${field.name}\``).join(', '),
+    );
+    return fields[0];
+  }
+  return null;
+}
+
+function getIDFieldDefinition(
+  schema: GraphQLSchema,
+  type: GraphQLCompositeType,
+): ?GraphQLField<*, *> {
+  const unmodifiedType = getRawType(type);
+  if (
+    unmodifiedType instanceof GraphQLObjectType ||
+    unmodifiedType instanceof GraphQLInterfaceType
+  ) {
+    const idType = schema.getType(ID_TYPE);
+    const nodeIDField = getNodeIDFieldDefinition(schema);
+    if (nodeIDField) {
+      const foundNodeIDField = unmodifiedType.getFields()[nodeIDField.name];
+      if (foundNodeIDField && getRawType(foundNodeIDField.type) === idType) {
+        return foundNodeIDField;
+      }
+    }
+    const idField = unmodifiedType.getFields()[ID];
+    if (idField && getRawType(idField.type) === idType) {
+      return idField;
+    }
+  }
+  return null;
+}
+
 module.exports = {
+  ID,
+  ID_TYPE,
+  NODE_TYPE,
   assertTypeWithFields,
   canHaveSelections,
+  getIDFieldDefinition,
+  getNodeIDFieldDefinition,
   getNullableType,
   getRawType,
   getSingularType,
   getTypeFromAST,
-  hasID,
   implementsInterface,
   isAbstractType,
   isUnionType,

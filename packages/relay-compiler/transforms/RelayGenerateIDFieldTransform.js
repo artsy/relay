@@ -11,36 +11,32 @@
 
 'use strict';
 
-const {hasUnaliasedSelection} = require('./RelayTransformUtils');
-const {
-  assertAbstractType,
-  assertCompositeType,
-  assertLeafType,
-} = require('graphql');
+const {getUnaliasedSelectionIndex} = require('./RelayTransformUtils');
+const {assertAbstractType, assertCompositeType} = require('graphql');
 const {
   CompilerContext,
   SchemaUtils,
   IRTransformer,
 } = require('graphql-compiler');
 
-import type {InlineFragment, LinkedField, ScalarField} from 'graphql-compiler';
-import type {GraphQLCompositeType} from 'graphql';
+import type {
+  Fragment,
+  InlineFragment,
+  LinkedField,
+  ScalarField,
+} from 'graphql-compiler';
+import type {GraphQLCompositeType, GraphQLField} from 'graphql';
+
 const {
+  NODE_TYPE,
   canHaveSelections,
+  getIDFieldDefinition,
+  getNodeIDFieldDefinition,
   getRawType,
-  hasID,
   implementsInterface,
   isAbstractType,
   mayImplement,
 } = SchemaUtils;
-
-const ID = 'id';
-const ID_TYPE = 'ID';
-const NODE_TYPE = 'Node';
-
-type State = {
-  idField: ScalarField,
-};
 
 /**
  * A transform that adds an `id` field on any type that has an id field but
@@ -49,66 +45,69 @@ type State = {
 function relayGenerateIDFieldTransform(
   context: CompilerContext,
 ): CompilerContext {
-  const idType = assertLeafType(context.serverSchema.getType(ID_TYPE));
-  const idField: ScalarField = {
-    kind: 'ScalarField',
-    alias: (null: ?string),
-    args: [],
-    directives: [],
-    handles: null,
-    metadata: null,
-    name: ID,
-    type: idType,
-  };
-  const state = {
-    idField,
-  };
-  return IRTransformer.transform(
-    context,
-    {
-      LinkedField: visitLinkedField,
-    },
-    () => state,
-  );
+  return IRTransformer.transform(context, {
+    LinkedField: visitNodeWithSelections,
+    Fragment: visitNodeWithSelections,
+  });
 }
 
-function visitLinkedField(field: LinkedField, state: State): LinkedField {
-  const transformedNode = this.traverse(field, state);
-
-  // If the field already has an unaliased `id` field, do nothing
-  if (hasUnaliasedSelection(field, ID)) {
-    return transformedNode;
-  }
-
+function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
+  const transformedNode = this.traverse(node);
   const context = this.getContext();
   const schema = context.serverSchema;
-  const unmodifiedType = assertCompositeType(getRawType(field.type));
+  const unmodifiedType = assertCompositeType(getRawType(node.type));
+  const idFieldDefinition = getIDFieldDefinition(schema, unmodifiedType);
 
-  // If the field type has an `id` subfield add an `id` selection
-  if (canHaveSelections(unmodifiedType) && hasID(schema, unmodifiedType)) {
-    return {
-      ...transformedNode,
-      selections: [...transformedNode.selections, state.idField],
-    };
+  if (idFieldDefinition) {
+    // If the field already has an unaliased `id` field, do nothing but mark it as being the DataID
+    const index = getUnaliasedSelectionIndex(node, idFieldDefinition.name);
+    if (index >= 0) {
+      return markSelectionAsDataID(transformedNode, index);
+    }
+    // If the field type has a ID field add a selection for that field
+    if (canHaveSelections(unmodifiedType)) {
+      return {
+        ...transformedNode,
+        selections: [
+          ...transformedNode.selections,
+          buildSelectionFromFieldDefinition(idFieldDefinition),
+        ],
+      };
+    }
   }
 
-  // If the field type is abstract, then generate a `... on Node { id }`
-  // fragment if *any* concrete type implements Node. Then generate a
-  // `... on PossibleType { id }` for every concrete type that does *not*
-  // implement `Node`
+  // - If the field type is abstract, then generate a `... on Node { id }`
+  //   fragment if *any* concrete type implements Node. Then generate a
+  //   `... on PossibleType { id }` for every concrete type that does *not*
+  //   implement `Node`
+  // - If the field type implements the Node interface, return a selection of the
+  //   one field in the Node interface that is of type `ID!`.
   if (isAbstractType(unmodifiedType)) {
     const selections = [...transformedNode.selections];
     if (mayImplement(schema, unmodifiedType, NODE_TYPE)) {
       const nodeType = assertCompositeType(schema.getType(NODE_TYPE));
-      selections.push(buildIDFragment(nodeType, state.idField));
+      const nodeIDFieldDefinition = getNodeIDFieldDefinition(schema);
+      if (nodeIDFieldDefinition) {
+        selections.push(
+          buildIDFragmentFromFieldDefinition(nodeType, nodeIDFieldDefinition),
+        );
+      }
     }
     const abstractType = assertAbstractType(unmodifiedType);
     schema.getPossibleTypes(abstractType).forEach(possibleType => {
-      if (
-        !implementsInterface(possibleType, NODE_TYPE) &&
-        hasID(schema, possibleType)
-      ) {
-        selections.push(buildIDFragment(possibleType, state.idField));
+      if (!implementsInterface(possibleType, NODE_TYPE)) {
+        const possibleTypeIDFieldDefinition = getIDFieldDefinition(
+          schema,
+          possibleType,
+        );
+        if (possibleTypeIDFieldDefinition) {
+          selections.push(
+            buildIDFragmentFromFieldDefinition(
+              possibleType,
+              possibleTypeIDFieldDefinition,
+            ),
+          );
+        }
       }
     });
     return {
@@ -125,16 +124,60 @@ function visitLinkedField(field: LinkedField, state: State): LinkedField {
  *
  * Returns IR for `... on FRAGMENT_TYPE { id }`
  */
-function buildIDFragment(
+function buildIDFragmentFromFieldDefinition(
   fragmentType: GraphQLCompositeType,
-  idField: ScalarField,
+  idField: GraphQLField<*, *>,
 ): InlineFragment {
   return {
     kind: 'InlineFragment',
     directives: [],
     metadata: null,
     typeCondition: fragmentType,
-    selections: [idField],
+    selections: [buildSelectionFromFieldDefinition(idField)],
+  };
+}
+
+/**
+ * @internal
+ */
+function buildSelectionFromFieldDefinition(
+  field: GraphQLField<*, *>,
+): ScalarField {
+  return {
+    kind: 'ScalarField',
+    alias: (null: ?string),
+    args: [],
+    directives: [],
+    handles: null,
+    metadata: {
+      isDataID: true,
+    },
+    name: field.name,
+    type: (field.type: any),
+  };
+}
+
+/**
+ * @internal
+ *
+ * Returns a copy of the node where the selection is marked as being the DataID field.
+ */
+function markSelectionAsDataID(transformedNode: any, index: number): any {
+  const selections = transformedNode.selections;
+  const selection = {
+    ...selections[index],
+    metadata: {
+      ...selections[index].metadata,
+      isDataID: true,
+    },
+  };
+  return {
+    ...transformedNode,
+    selections: [
+      ...selections.slice(0, index),
+      selection,
+      ...selections.slice(index + 1),
+    ],
   };
 }
 

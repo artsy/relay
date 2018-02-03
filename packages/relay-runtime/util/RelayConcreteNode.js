@@ -120,6 +120,7 @@ export type ConcreteFragment = {
   metadata: ?{[key: string]: mixed},
   argumentDefinitions: Array<ConcreteArgumentDefinition>,
   selections: Array<ConcreteSelection>,
+  idField: ?string,
 };
 export type ConcreteFragmentSpread = {
   kind: 'FragmentSpread',
@@ -153,6 +154,7 @@ export type ConcreteLinkedField = {
   concreteType: ?string,
   plural: boolean,
   selections: Array<ConcreteSelection>,
+  idField: ?string,
 };
 export type ConcreteLinkedHandle = {
   kind: 'LinkedHandle',

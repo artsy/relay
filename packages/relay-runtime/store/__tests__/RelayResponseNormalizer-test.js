@@ -17,6 +17,7 @@ const RelayModernRecord = require('RelayModernRecord');
 const {normalize} = require('RelayResponseNormalizer');
 const {ROOT_ID, ROOT_TYPE} = require('RelayStoreUtils');
 const RelayModernTestUtils = require('RelayModernTestUtils');
+const RelayGenerateIDFieldTransform = require('RelayGenerateIDFieldTransform');
 
 describe('RelayResponseNormalizer', () => {
   const {
@@ -54,7 +55,8 @@ describe('RelayResponseNormalizer', () => {
           }
         }
       }
-    `,
+      `,
+      [RelayGenerateIDFieldTransform.transform],
     );
     const payload = {
       node: {
@@ -448,7 +450,8 @@ describe('RelayResponseNormalizer', () => {
           }
         }
       }
-    `,
+      `,
+      [RelayGenerateIDFieldTransform.transform],
     );
     const payload = {
       node: {
@@ -527,7 +530,8 @@ describe('RelayResponseNormalizer', () => {
           }
         }
       }
-    `,
+      `,
+      [RelayGenerateIDFieldTransform.transform],
     );
     const payload = {
       node: {
