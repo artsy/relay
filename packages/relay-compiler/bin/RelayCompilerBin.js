@@ -122,7 +122,7 @@ async function run(options: {
   validate: boolean,
   quiet: boolean,
   language: string,
-  artifactDirectory?: ?string,
+  artifactDirectory: ?string,
 }) {
   const schemaPath = path.resolve(process.cwd(), options.schema);
   if (!fs.existsSync(schemaPath)) {
@@ -170,6 +170,13 @@ Ensure that one such file exists in ${srcDir} or its parents.
     languagePlugin.findGraphQLTags,
   );
 
+  const artifactDirectory = options.artifactDirectory
+    ? // $FlowFixMe artifactDirectory can’t be null/undefined at this point
+      path.resolve(process.cwd(), options.artifactDirectory)
+    : null;
+
+  const isGeneratedDirectory = artifactDirectory || '__generated__';
+
   const parserConfigs = {
     js: {
       baseDir: srcDir,
@@ -205,14 +212,10 @@ Ensure that one such file exists in ${srcDir} or its parents.
   };
   const writerConfigs = {
     js: {
-      getWriter: getRelayFileWriter(
-        srcDir,
-        languagePlugin,
-        options.artifactDirectory,
-      ),
+      getWriter: getRelayFileWriter(srcDir, languagePlugin, artifactDirectory),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.' + languagePlugin.outputExtension) &&
-        filePath.includes('__generated__'),
+        filePath.endsWith('.graphql.' + languagePlugin.outputExtension) &&
+        filePath.includes(isGeneratedDirectory),
       parser: 'js',
       baseParsers: ['graphql'],
     },
