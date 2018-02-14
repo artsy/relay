@@ -50,8 +50,8 @@ const ID_TYPE = 'ID';
 const NODE_TYPE = 'Node';
 
 /**
- * A transform that adds an `id` field on any type that has an id field but
- * where there is no unaliased `id` selection.
+ * A transform that adds a `__id` field on any type that has a `Node` or `id`
+ * field but where there is no unaliased `__id` selection.
  */
 function relayGenerateIDFieldTransform(
   context: CompilerContext,
@@ -65,7 +65,7 @@ function relayGenerateIDFieldTransform(
 function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
   const transformedNode = this.traverse(node);
 
-  // If the field already has an unaliased `__id` field, do nothing.
+  // If the field already has an `__id` selection, do nothing.
   if (hasSelection(node, '__id')) {
     return transformedNode;
   }
@@ -75,7 +75,7 @@ function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
   const unmodifiedType = assertCompositeType(getRawType(node.type));
   const idFieldDefinition = getIDFieldDefinition(schema, unmodifiedType);
 
-  // If the field type has a ID field add a selection for that field
+  // If the field type has a ID field add a selection for that field.
   if (idFieldDefinition && canHaveSelections(unmodifiedType)) {
     return {
       ...transformedNode,
@@ -86,12 +86,12 @@ function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
     };
   }
 
-  // - If the field type is abstract, then generate a `... on Node { id }`
-  //   fragment if *any* concrete type implements Node. Then generate a
-  //   `... on PossibleType { id }` for every concrete type that does *not*
-  //   implement `Node`
-  // - If the field type implements the Node interface, return a selection of
-  //   the one field in the Node interface that is of type `ID!`.
+  // - If the field type is abstract, then generate a `... on Node { __id: id }`
+  //   fragment if *any* concrete type implements `Node`. Then generate a
+  //   `... on PossibleType { __id: id }` for every concrete type that does
+  //   *not* implement `Node`.
+  // - If the field type implements the `Node` interface, return a selection of
+  //   the one field in the `Node` interface that is of type `ID` or `ID!`.
   if (isAbstractType(unmodifiedType)) {
     const selections = [...transformedNode.selections];
     if (mayImplement(schema, unmodifiedType, NODE_TYPE)) {
@@ -132,7 +132,7 @@ function visitNodeWithSelections<T: Fragment | LinkedField>(node: T): T {
 /**
  * @internal
  *
- * Returns IR for `... on FRAGMENT_TYPE { id }`
+ * Returns IR for `... on FRAGMENT_TYPE { __id: id }`
  */
 function buildIDFragmentFromFieldDefinition(
   fragmentType: GraphQLCompositeType,
@@ -152,7 +152,7 @@ function buildSelectionFromFieldDefinition(
 ): ScalarField {
   return {
     kind: 'ScalarField',
-    alias: ID_KEY,
+    alias: field.name === ID_KEY ? null : ID_KEY,
     args: [],
     directives: [],
     handles: null,
@@ -215,6 +215,7 @@ function getIDFieldDefinition(
 module.exports = {
   transform: relayGenerateIDFieldTransform,
   // Only exported for testing purposes.
+  buildSelectionFromFieldDefinition,
   getIDFieldDefinition,
   getNodeIDFieldDefinition,
 };

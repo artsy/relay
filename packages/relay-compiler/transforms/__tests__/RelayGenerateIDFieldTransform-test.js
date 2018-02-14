@@ -10,7 +10,7 @@
 
 'use strict';
 
-const {buildSchema} = require('graphql');
+const {buildSchema, GraphQLNonNull, GraphQLID} = require('graphql');
 
 const GraphQLCompilerContext = require('GraphQLCompilerContext');
 const GraphQLIRPrinter = require('GraphQLIRPrinter');
@@ -20,6 +20,7 @@ const {generateTestsFromFixtures} = require('RelayModernTestUtils');
 
 const {
   transform,
+  buildSelectionFromFieldDefinition,
   getIDFieldDefinition,
   getNodeIDFieldDefinition,
 } = require('RelayGenerateIDFieldTransform');
@@ -37,6 +38,44 @@ describe('RelayGenerateIDFieldTransform', () => {
         .join('\n');
     },
   );
+
+  describe('buildSelectionFromFieldDefinition', () => {
+    it('returns an aliased selection', () => {
+      expect(
+        buildSelectionFromFieldDefinition({
+          name: 'id',
+          type: new GraphQLNonNull(GraphQLID),
+        }),
+      ).toEqual({
+        kind: 'ScalarField',
+        alias: '__id',
+        args: [],
+        directives: [],
+        handles: null,
+        metadata: null,
+        name: 'id',
+        type: new GraphQLNonNull(GraphQLID),
+      });
+    });
+
+    it('returns an unaliased selection when the name matches the alias', () => {
+      expect(
+        buildSelectionFromFieldDefinition({
+          name: '__id',
+          type: new GraphQLNonNull(GraphQLID),
+        }),
+      ).toEqual({
+        kind: 'ScalarField',
+        alias: null,
+        args: [],
+        directives: [],
+        handles: null,
+        metadata: null,
+        name: '__id',
+        type: new GraphQLNonNull(GraphQLID),
+      });
+    });
+  });
 
   describe('getNodeIDFieldDefinition()', () => {
     it('returns nothing in case no Node interface exists', () => {
