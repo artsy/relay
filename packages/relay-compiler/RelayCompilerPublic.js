@@ -15,11 +15,12 @@ const GraphQLCompilerContext = require('./graphql-compiler/core/GraphQLCompilerC
 const RelayCodeGenerator = require('./codegen/RelayCodeGenerator');
 const RelayFileWriter = require('./codegen/RelayFileWriter');
 const RelayIRTransforms = require('./core/RelayIRTransforms');
-const RelayJSModuleParser = require('./core/RelayJSModuleParser');
+const RelaySourceModuleParser = require('./core/RelaySourceModuleParser');
 const RelayParser = require('./core/RelayParser');
+const FindGraphQLTags = require('./language/javascript/FindGraphQLTags');
 
 const compileRelayArtifacts = require('./codegen/compileRelayArtifacts');
-const formatGeneratedModule = require('./codegen/formatGeneratedModule');
+const formatGeneratedModule = require('./language/javascript/formatGeneratedModule');
 
 const {
   ASTConvert,
@@ -29,6 +30,8 @@ const {
 } = require('graphql-compiler');
 
 export type {CompileResult, ParserConfig, WriterConfig} from 'graphql-compiler';
+
+const RelayJSModuleParser = RelaySourceModuleParser(FindGraphQLTags.find);
 
 module.exports = {
   ConsoleReporter,

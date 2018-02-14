@@ -27,10 +27,6 @@ const {
   GraphQLUnionType,
 } = require('graphql');
 
-export type ScalarTypeMapping = {
-  [type: string]: string,
-};
-
 import type {State} from './RelayFlowGenerator';
 
 function transformScalarType(
