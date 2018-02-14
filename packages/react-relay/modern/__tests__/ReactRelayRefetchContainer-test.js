@@ -90,7 +90,6 @@ describe('ReactRelayRefetchContainer', () => {
       fragment UserFragment on User @argumentDefinitions(
         cond: {type: "Boolean!", defaultValue: true}
       ) {
-        id
         name @include(if: $cond)
       }
     `,
@@ -129,7 +128,7 @@ describe('ReactRelayRefetchContainer', () => {
     // Pre-populate the store with data
     environment.commitPayload(createOperationSelector(UserQuery, {id: '4'}), {
       node: {
-        id: '4',
+        __id: '4',
         __typename: 'User',
         name: 'Zuck',
       },
@@ -138,7 +137,7 @@ describe('ReactRelayRefetchContainer', () => {
       createOperationSelector(UserQuery, {id: '842472'}),
       {
         node: {
-          id: '842472',
+          __id: '842472',
           __typename: 'User',
           name: 'Joe',
         },
@@ -227,7 +226,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         name: 'Zuck',
       },
       relay: {
@@ -240,7 +239,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(environment.subscribe.mock.calls[0][0]).toEqual({
       dataID: '4',
       data: {
-        id: '4',
+        __id: '4',
         name: 'Zuck',
       },
       node: UserFragment,
@@ -322,7 +321,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '842472',
+        __id: '842472',
         name: 'Joe',
       },
       relay: {
@@ -335,7 +334,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(environment.subscribe.mock.calls[0][0]).toEqual({
       dataID: '842472',
       data: {
-        id: '842472',
+        __id: '842472',
         name: 'Joe',
       },
       node: UserFragment,
@@ -367,7 +366,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         name: 'Zuck',
       },
       relay: {
@@ -380,7 +379,7 @@ describe('ReactRelayRefetchContainer', () => {
     expect(environment.subscribe.mock.calls[0][0]).toEqual({
       dataID: '4',
       data: {
-        id: '4',
+        __id: '4',
         name: 'Zuck',
       },
       node: UserFragment,
@@ -805,7 +804,7 @@ describe('ReactRelayRefetchContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
           },
         },

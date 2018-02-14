@@ -97,20 +97,18 @@ describe('ReactRelayPaginationContainer', () => {
         $orderby: [String]
       ) {
         node(id: $id) {
-          id
           __typename
           ...UserFragment
         }
       }
 
       fragment UserFragment on User {
-        id
         friends(after: $after, first: $count, orderby: $orderby) @connection(
           key: "UserFragment_friends"
         ) {
           edges {
             node {
-              id
+              __id: id
             }
           }
         }
@@ -133,7 +131,7 @@ describe('ReactRelayPaginationContainer', () => {
     getVariables = jest.fn((props, {count, cursor}) => ({
       after: cursor,
       count,
-      id: props.user.id,
+      id: props.user.__id,
       orderby: ['name'],
     }));
     TestComponent = render;
@@ -158,7 +156,7 @@ describe('ReactRelayPaginationContainer', () => {
     // Pre-populate the store with data
     environment.commitPayload(createOperationSelector(UserQuery, variables), {
       node: {
-        id: '4',
+        __id: '4',
         __typename: 'User',
         friends: {
           edges: [
@@ -166,7 +164,7 @@ describe('ReactRelayPaginationContainer', () => {
               cursor: 'cursor:1',
               node: {
                 __typename: 'User',
-                id: 'node:1',
+                __id: 'node:1',
               },
             },
           ],
@@ -184,7 +182,7 @@ describe('ReactRelayPaginationContainer', () => {
       }),
       {
         node: {
-          id: '842472',
+          __id: '842472',
           __typename: 'User',
           friends: {
             edges: [],
@@ -275,14 +273,14 @@ describe('ReactRelayPaginationContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         friends: {
           edges: [
             {
               cursor: 'cursor:1',
               node: {
                 __typename: 'User',
-                id: 'node:1',
+                __id: 'node:1',
               },
             },
           ],
@@ -337,7 +335,7 @@ describe('ReactRelayPaginationContainer', () => {
       node: UserFragment,
       variables,
       data: {
-        id: '4',
+        __id: '4',
         friends: null, // set to null
       },
       seenRecords: {},
@@ -350,7 +348,7 @@ describe('ReactRelayPaginationContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         friends: null,
       },
       relay: {
@@ -394,7 +392,7 @@ describe('ReactRelayPaginationContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '842472',
+        __id: '842472',
         friends: {
           edges: [],
           pageInfo: {
@@ -451,14 +449,14 @@ describe('ReactRelayPaginationContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         friends: {
           edges: [
             {
               cursor: 'cursor:1',
               node: {
                 __typename: 'User',
-                id: 'node:1',
+                __id: 'node:1',
               },
             },
           ],
@@ -494,14 +492,14 @@ describe('ReactRelayPaginationContainer', () => {
     expect(render.mock.calls.length).toBe(1);
     expect(render.mock.calls[0][0]).toEqual({
       user: {
-        id: '4',
+        __id: '4',
         friends: {
           edges: [
             {
               cursor: 'cursor:1',
               node: {
                 __typename: 'User',
-                id: 'node:1',
+                __id: 'node:1',
               },
             },
           ],
@@ -696,7 +694,6 @@ describe('ReactRelayPaginationContainer', () => {
           $orderby: [String]
         ) {
           node(id: $id) {
-            id
             ...UserFragment
           }
         }
@@ -705,7 +702,7 @@ describe('ReactRelayPaginationContainer', () => {
           friends(after: $after, first: $count, orderby: $orderby) {
             edges {
               node {
-                id
+                __id: id
               }
             }
             pageInfo {
@@ -759,14 +756,13 @@ describe('ReactRelayPaginationContainer', () => {
             ...ViewerFragment
           }
           node(id: $id) {
-            id
             ...UserFragment
           }
         }
 
         fragment ViewerFragment on Viewer {
-          actor{
-            id
+          actor {
+            __id: id
           }
         }
 
@@ -880,14 +876,14 @@ describe('ReactRelayPaginationContainer', () => {
         data: {
           node: {
             __typename: 'User',
-            id: '4',
+            __id: '4',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:2',
                   node: {
                     __typename: 'User',
-                    id: 'node:2',
+                    __id: 'node:2',
                   },
                 },
               ],
@@ -909,14 +905,14 @@ describe('ReactRelayPaginationContainer', () => {
         data: {
           node: {
             __typename: 'User',
-            id: '4',
+            __id: '4',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:2',
                   node: {
                     __typename: 'User',
-                    id: 'node:2',
+                    __id: 'node:2',
                   },
                 },
               ],
@@ -968,7 +964,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that the fetch resolved
             friends: null,
@@ -986,7 +982,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that the fetch resolved
             friends: null,
@@ -1008,7 +1004,7 @@ describe('ReactRelayPaginationContainer', () => {
         {
           data: {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
@@ -1016,7 +1012,7 @@ describe('ReactRelayPaginationContainer', () => {
                     cursor: 'cursor:2',
                     node: {
                       __typename: 'User',
-                      id: 'node:2',
+                      __id: 'node:2',
                     },
                   },
                 ],
@@ -1111,14 +1107,14 @@ describe('ReactRelayPaginationContainer', () => {
       expect(getVariables).toBeCalledWith(
         {
           user: {
-            id: '4',
+            __id: '4',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
                     __typename: 'User',
-                    id: 'node:1',
+                    __id: 'node:1',
                   },
                 },
               ],
@@ -1220,14 +1216,15 @@ describe('ReactRelayPaginationContainer', () => {
         {
           data: {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: 'node:2',
+                      __typename: 'User',
+                      __id: 'node:2',
                     },
                   },
                 ],
@@ -1256,14 +1253,15 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:2',
                   node: {
-                    id: 'node:2',
+                    __typename: 'User',
+                    __id: 'node:2',
                   },
                 },
               ],
@@ -1321,7 +1319,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that their results are retained
             friends: null,
@@ -1344,7 +1342,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that their results are retained
             friends: null,
@@ -1395,14 +1393,14 @@ describe('ReactRelayPaginationContainer', () => {
       expect(getVariables).toBeCalledWith(
         {
           user: {
-            id: '4',
+            __id: '4',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
                     __typename: 'User',
-                    id: 'node:1',
+                    __id: 'node:1',
                   },
                 },
               ],
@@ -1490,14 +1488,14 @@ describe('ReactRelayPaginationContainer', () => {
         data: {
           node: {
             __typename: 'User',
-            id: '4',
+            __id: '4',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:2',
                   node: {
                     __typename: 'User',
-                    id: 'node:2',
+                    __id: 'node:2',
                   },
                 },
               ],
@@ -1513,14 +1511,14 @@ describe('ReactRelayPaginationContainer', () => {
       expect(render.mock.calls[1][0].user.friends.edges.length).toBe(1);
       expect(render.mock.calls[1][0]).toEqual({
         user: {
-          id: '4',
+          __id: '4',
           friends: {
             edges: [
               {
                 cursor: 'cursor:2',
                 node: {
                   __typename: 'User',
-                  id: 'node:2',
+                  __id: 'node:2',
                 },
               },
             ],
@@ -1582,7 +1580,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that their results are retained
             friends: null,
@@ -1605,7 +1603,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             // The resuls don't matter, only that their results are retained
             friends: null,
@@ -1635,7 +1633,7 @@ describe('ReactRelayPaginationContainer', () => {
       environment.mock.resolve(UserQuery, {
         data: {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
@@ -1643,7 +1641,7 @@ describe('ReactRelayPaginationContainer', () => {
                   cursor: 'cursor:7',
                   node: {
                     __typename: 'User',
-                    id: 'node:7',
+                    __id: 'node:7',
                   },
                 },
               ],
@@ -1661,14 +1659,14 @@ describe('ReactRelayPaginationContainer', () => {
       expect(render.mock.calls[1][0].user.friends.edges.length).toBe(1);
       expect(render.mock.calls[1][0]).toEqual({
         user: {
-          id: '4',
+          __id: '4',
           friends: {
             edges: [
               {
                 cursor: 'cursor:7',
                 node: {
                   __typename: 'User',
-                  id: 'node:7',
+                  __id: 'node:7',
                 },
               },
             ],
@@ -1688,6 +1686,7 @@ describe('ReactRelayPaginationContainer', () => {
       });
     });
   });
+
   it('can be unwrapped in tests', () => {
     class TestUnwrapping extends React.Component {
       render() {
@@ -1717,7 +1716,7 @@ describe('ReactRelayPaginationContainer', () => {
     );
 
     const renderer = ReactTestRenderer.create(
-      <UnwrappedComponent user={{id: '4', name: 'Mark'}} />,
+      <UnwrappedComponent user={{__id: '4', name: 'Mark'}} />,
     );
 
     expect(renderer.toJSON()).toMatchSnapshot();

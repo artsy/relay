@@ -20,6 +20,7 @@ const RelayRecordSourceProxy = require('RelayRecordSourceProxy');
 const RelayResponseNormalizer = require('RelayResponseNormalizer');
 const RelayStoreUtils = require('RelayStoreUtils');
 const RelayModernTestUtils = require('RelayModernTestUtils');
+const RelayGenerateIDFieldTransform = require('RelayGenerateIDFieldTransform');
 const RelayConnectionInterface = require('RelayConnectionInterface');
 
 const getRelayHandleKey = require('getRelayHandleKey');
@@ -91,7 +92,7 @@ describe('RelayConnectionHandler', () => {
               edges {
                 cursor
                 node {
-                  id
+                  __id: id
                 }
               }
               pageInfo {
@@ -105,6 +106,7 @@ describe('RelayConnectionHandler', () => {
         }
       }
     `,
+      [RelayGenerateIDFieldTransform.transform],
     ));
   });
 
@@ -117,20 +119,20 @@ describe('RelayConnectionHandler', () => {
       normalize(
         {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
-                    id: '1',
+                    __id: '1',
                   },
                 },
                 {
                   cursor: 'cursor:2',
                   node: {
-                    id: '2',
+                    __id: '2',
                   },
                 },
               ],
@@ -248,20 +250,20 @@ describe('RelayConnectionHandler', () => {
       normalize(
         {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
-                    id: '1',
+                    __id: '1',
                   },
                 },
                 {
                   cursor: 'cursor:2',
                   node: {
-                    id: '2',
+                    __id: '2',
                   },
                 },
               ],
@@ -382,20 +384,20 @@ describe('RelayConnectionHandler', () => {
       normalize(
         {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
-                    id: '1',
+                    __id: '1',
                   },
                 },
                 {
                   cursor: 'cursor:2',
                   node: {
-                    id: '2',
+                    __id: '2',
                   },
                 },
               ],
@@ -524,14 +526,14 @@ describe('RelayConnectionHandler', () => {
       normalize(
         {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
-                    id: '1',
+                    __id: '1',
                   },
                 },
               ],
@@ -611,14 +613,14 @@ describe('RelayConnectionHandler', () => {
       normalize(
         {
           node: {
-            id: '4',
+            __id: '4',
             __typename: 'User',
             friends: {
               edges: [
                 {
                   cursor: 'cursor:1',
                   node: {
-                    id: '1',
+                    __id: '1',
                   },
                 },
               ],
@@ -694,14 +696,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:1',
                     node: {
-                      id: '1',
+                      __id: '1',
                     },
                   },
                 ],
@@ -749,14 +751,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],
@@ -829,14 +831,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:0',
                     node: {
-                      id: '0',
+                      __id: '0',
                     },
                   },
                 ],
@@ -909,14 +911,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:0',
                     node: {
-                      id: '0',
+                      __id: '0',
                     },
                   },
                 ],
@@ -988,14 +990,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: null,
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],
@@ -1068,14 +1070,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],
@@ -1148,7 +1150,7 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [],
@@ -1212,20 +1214,20 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2', // new cursor
                     node: {
-                      id: '1', // same as existing edge
+                      __id: '1', // same as existing edge
                     },
                   },
                   {
                     cursor: 'cursor:3',
                     node: {
-                      id: '3',
+                      __id: '3',
                     },
                   },
                 ],
@@ -1306,20 +1308,20 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:1', // same cursor as existing edge
                     node: {
-                      id: '2', // different node id
+                      __id: '2', // different node id
                     },
                   },
                   {
                     cursor: 'cursor:3',
                     node: {
-                      id: '3',
+                      __id: '3',
                     },
                   },
                 ],
@@ -1400,14 +1402,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],
@@ -1478,14 +1480,14 @@ describe('RelayConnectionHandler', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 edges: [
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],
@@ -1550,11 +1552,12 @@ describe('RelayConnectionHandler', () => {
           // page info unchanged
         });
       });
+
       it('updates fields on connection', () => {
         normalize(
           {
             node: {
-              id: '4',
+              __id: '4',
               __typename: 'User',
               friends: {
                 count: 2,
@@ -1562,7 +1565,7 @@ describe('RelayConnectionHandler', () => {
                   {
                     cursor: 'cursor:2',
                     node: {
-                      id: '2',
+                      __id: '2',
                     },
                   },
                 ],

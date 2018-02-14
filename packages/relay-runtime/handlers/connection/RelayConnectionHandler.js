@@ -218,8 +218,7 @@ function update(store: RecordSourceProxy, payload: HandleFieldPayload): void {
  *   friends(first: 10) @connection(key: "FriendsFragment_friends") {
  *    edges {
  *      node {
- *        id
- *        }
+ *        __id: id
  *      }
  *   }
  * }
@@ -265,8 +264,7 @@ function getConnection(
  *   friends(first: 10) @connection(key: "FriendsFragment_friends") {
  *    edges {
  *      node {
- *        id
- *        }
+ *        __id: id
  *      }
  *   }
  * }
@@ -364,8 +362,7 @@ function createEdge(
  *   friends(first: 10) @connection(key: "FriendsFragment_friends") {
  *    edges {
  *      node {
- *        id
- *        }
+ *        __id: id
  *      }
  *   }
  * }
@@ -507,7 +504,7 @@ function mergeEdges(
       continue;
     }
     const node = edge.getLinkedRecord(NODE);
-    const nodeID = node && node.getValue('id');
+    const nodeID = node && node.getDataID();
     if (nodeID) {
       if (nodeIDs.has(nodeID)) {
         continue;

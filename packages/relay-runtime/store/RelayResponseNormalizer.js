@@ -27,6 +27,8 @@ const {
   TYPENAME_KEY,
 } = require('RelayStoreUtils');
 
+const {ID_SELECTION} = require('RelayGenerateIDFieldTransform');
+
 import type {DataID, Variables} from '../util/RelayRuntimeTypes';
 import type {
   ConcreteField,
@@ -256,7 +258,7 @@ class RelayResponseNormalizer {
       storageKey,
     );
     const nextID =
-      fieldValue.id ||
+      fieldValue[ID_SELECTION] ||
       // Reuse previously generated client IDs
       RelayModernRecord.getLinkedRecordID(record, storageKey) ||
       generateRelayClientID(RelayModernRecord.getDataID(record), storageKey);
@@ -305,7 +307,7 @@ class RelayResponseNormalizer {
       );
 
       const nextID =
-        item.id ||
+        item[ID_SELECTION] ||
         (prevIDs && prevIDs[nextIndex]) || // Reuse previously generated client IDs
         generateRelayClientID(
           RelayModernRecord.getDataID(record),

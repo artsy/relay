@@ -31,7 +31,6 @@ describe('Configs: NODE_DELETE', () => {
         commentDelete(input: $input) {
           deletedCommentId
           feedback {
-            id
             topLevelComments {
               count
             }
@@ -56,7 +55,7 @@ describe('Configs: NODE_DELETE', () => {
               count
               edges {
                 node {
-                  id
+                  __id: id
                 }
               }
             }
@@ -67,20 +66,20 @@ describe('Configs: NODE_DELETE', () => {
     const payload = {
       node: {
         __typename: 'Feedback',
-        id: feedbackID,
+        __id: feedbackID,
         topLevelComments: {
           count: 2,
           edges: [
             {
               cursor: firstCommentID + ':cursor',
               node: {
-                id: firstCommentID,
+                __id: firstCommentID,
               },
             },
             {
               cursor: secondCommentID + ':cursor',
               node: {
-                id: secondCommentID,
+                __id: secondCommentID,
               },
             },
           ],
@@ -91,7 +90,7 @@ describe('Configs: NODE_DELETE', () => {
       commentDelete: {
         deletedCommentId: firstCommentID,
         feedback: {
-          id: feedbackID,
+          __id: feedbackID,
           topLevelComments: {
             count: 1,
           },
@@ -132,7 +131,7 @@ describe('Configs: NODE_DELETE', () => {
         commentDelete: {
           deletedCommentId: firstCommentID,
           feedback: {
-            id: feedbackID,
+            __id: feedbackID,
             topLevelComments: {
               count: 1,
             },
@@ -184,7 +183,7 @@ describe('Configs: RANGE_DELETE', () => {
         clientMutationId: '0',
         deletedCommentId: commentID,
         feedback: {
-          id: '123',
+          __id: '123',
           comments: {
             count: 0,
           },
@@ -223,14 +222,14 @@ describe('Configs: RANGE_DELETE', () => {
     const payload = {
       node: {
         __typename: 'Feedback',
-        id: '123',
+        __id: '123',
         comments: {
           count: 1,
           edges: [
             {
               cursor: '<cursor>',
               node: {
-                id: commentID,
+                __id: commentID,
                 __typename: 'Comment',
                 body: {
                   text: '...',
@@ -277,7 +276,7 @@ describe('Configs: RANGE_DELETE', () => {
           clientMutationId: '0',
           deletedCommentId: commentID,
           feedback: {
-            id: '123',
+            __id: '123',
             comments: {
               count: 1,
             },
@@ -300,10 +299,10 @@ describe('Configs: RANGE_DELETE', () => {
       ) {
         unfriend(input: $input) {
           actor {
-            id
+            __id: id
           }
           formerFriend {
-            id
+            __id: id
           }
         }
       }
@@ -336,7 +335,7 @@ describe('Configs: RANGE_DELETE', () => {
                 key: "Friends_friends") {
                   edges {
                     node {
-                      id
+                      __id: id
                     }
                   }
                 }
@@ -349,14 +348,14 @@ describe('Configs: RANGE_DELETE', () => {
       viewer: {
         actor: {
           __typename: 'User',
-          id: '123',
+          __id: '123',
           friends: {
             edges: [
               {
                 cursor: '<cursor>',
                 __typename: 'User',
                 node: {
-                  id: '456',
+                  __id: '456',
                 },
               },
             ],
@@ -370,11 +369,11 @@ describe('Configs: RANGE_DELETE', () => {
       unfriend: {
         clientMutationId: '0',
         actor: {
-          id: '123',
+          __id: '123',
           __typename: 'User',
         },
         formerFriend: {
-          id: '456',
+          __id: '456',
         },
       },
     };
@@ -402,11 +401,11 @@ describe('Configs: RANGE_DELETE', () => {
         unfriend: {
           clientMutationId: '0',
           actor: {
-            id: '123',
+            __id: '123',
             __typename: 'User',
           },
           formerFriend: {
-            id: '456',
+            __id: '456',
           },
         },
       },
@@ -447,7 +446,7 @@ describe('Configs: RANGE_ADD', () => {
         __typename: 'CommentsEdge',
         cursor: nextCursor,
         node: {
-          id: nextNodeID,
+          __id: nextNodeID,
           body: {
             text: variables.input.message.text,
           },
@@ -470,7 +469,6 @@ describe('Configs: RANGE_ADD', () => {
           feedbackCommentEdge {
             cursor
             node {
-              id
               body {
                 text
               }
@@ -488,7 +486,7 @@ describe('Configs: RANGE_ADD', () => {
             ) {
               edges {
                 node {
-                  id
+                  __id: id
                 }
               }
             }
@@ -497,14 +495,14 @@ describe('Configs: RANGE_ADD', () => {
       }`));
     payload = {
       node: {
-        id: feedbackID,
+        __id: feedbackID,
         __typename: 'Feedback',
         topLevelComments: {
           edges: [
             {
               cursor: commentID + ':cursor',
               node: {
-                id: commentID,
+                __id: commentID,
               },
             },
           ],
@@ -521,7 +519,7 @@ describe('Configs: RANGE_ADD', () => {
             __typename: 'CommentsEdge',
             cursor: nextCursor,
             node: {
-              id: nextNodeID,
+              __id: nextNodeID,
               body: {
                 text: variables.input.message.text,
               },
@@ -594,7 +592,7 @@ describe('Configs: RANGE_ADD', () => {
     const operationSelector = createOperationSelector(CommentQuery, {});
     environment.commitPayload(operationSelector, {
       node: {
-        id: feedbackID,
+        __id: feedbackID,
         __typename: 'Feedback',
         topLevelComments: {
           count: 1,
@@ -602,7 +600,7 @@ describe('Configs: RANGE_ADD', () => {
             {
               cursor: 'comment1:cursor',
               node: {
-                id: 'comment1',
+                __id: 'comment1',
               },
             },
           ],
@@ -623,7 +621,7 @@ describe('Configs: RANGE_ADD', () => {
             __typename: 'CommentsEdge',
             cursor: 'comment2:cursor',
             node: {
-              id: 'comment2',
+              __id: 'comment2',
               // these are extra fields which should be stripped off before appending
               // to the connection.
               body: {
@@ -645,20 +643,21 @@ describe('Configs: RANGE_ADD', () => {
     });
     expect(snapshot.data).toEqual({
       node: {
+        __id: 'feedback123',
         topLevelComments: {
           edges: [
             {
               cursor: 'comment1:cursor',
               node: {
                 __typename: 'Comment',
-                id: 'comment1',
+                __id: 'comment1',
               },
             },
             {
               cursor: 'comment2:cursor',
               node: {
                 __typename: 'Comment',
-                id: 'comment2',
+                __id: 'comment2',
               },
             },
           ],
@@ -679,7 +678,7 @@ describe('Configs: RANGE_ADD', () => {
             __typename: 'CommentsEdge',
             cursor: 'comment3:cursor',
             node: {
-              id: 'comment3',
+              __id: 'comment3',
               // these are extra fields which should be stripped off before appending
               // to the connection.
               body: {
@@ -707,27 +706,28 @@ describe('Configs: RANGE_ADD', () => {
 
     expect(snapshot.data).toEqual({
       node: {
+        __id: 'feedback123',
         topLevelComments: {
           edges: [
             {
               cursor: 'comment1:cursor',
               node: {
                 __typename: 'Comment',
-                id: 'comment1',
+                __id: 'comment1',
               },
             },
             {
               cursor: 'comment2:cursor',
               node: {
                 __typename: 'Comment',
-                id: 'comment2',
+                __id: 'comment2',
               },
             },
             {
               cursor: 'comment3:cursor',
               node: {
                 __typename: 'Comment',
-                id: 'comment3',
+                __id: 'comment3',
               },
             },
           ],
@@ -811,7 +811,7 @@ describe('Configs: RANGE_ADD', () => {
               count
               edges {
                 node {
-                  id
+                  __id: id
                 }
               }
             }
