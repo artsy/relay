@@ -45,8 +45,8 @@ const {
 } = SchemaUtils;
 
 const ID = 'id';
+const ID_KEY = '__id';
 const ID_TYPE = 'ID';
-const ID_SELECTION = '__id';
 const NODE_TYPE = 'Node';
 
 /**
@@ -152,7 +152,7 @@ function buildSelectionFromFieldDefinition(
 ): ScalarField {
   return {
     kind: 'ScalarField',
-    alias: ID_SELECTION,
+    alias: ID_KEY,
     args: [],
     directives: [],
     handles: null,
@@ -213,8 +213,8 @@ function getIDFieldDefinition(
 }
 
 module.exports = {
-  ID_SELECTION,
   transform: relayGenerateIDFieldTransform,
+  // Only exported for testing purposes.
   getIDFieldDefinition,
   getNodeIDFieldDefinition,
 };

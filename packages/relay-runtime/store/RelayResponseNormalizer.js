@@ -21,13 +21,12 @@ const invariant = require('invariant');
 const warning = require('warning');
 
 const {
+  ID_KEY,
   getArgumentValues,
   getHandleStorageKey,
   getStorageKey,
   TYPENAME_KEY,
 } = require('RelayStoreUtils');
-
-const {ID_SELECTION} = require('RelayGenerateIDFieldTransform');
 
 import type {DataID, Variables} from '../util/RelayRuntimeTypes';
 import type {
@@ -258,7 +257,7 @@ class RelayResponseNormalizer {
       storageKey,
     );
     const nextID =
-      fieldValue[ID_SELECTION] ||
+      fieldValue[ID_KEY] ||
       // Reuse previously generated client IDs
       RelayModernRecord.getLinkedRecordID(record, storageKey) ||
       generateRelayClientID(RelayModernRecord.getDataID(record), storageKey);
@@ -307,7 +306,7 @@ class RelayResponseNormalizer {
       );
 
       const nextID =
-        item[ID_SELECTION] ||
+        item[ID_KEY] ||
         (prevIDs && prevIDs[nextIndex]) || // Reuse previously generated client IDs
         generateRelayClientID(
           RelayModernRecord.getDataID(record),
