@@ -30,7 +30,6 @@ const {
 
 import type {
   ASTNode,
-  GraphQLCompositeType,
   GraphQLEnumType,
   GraphQLInputObjectType,
   GraphQLNamedType,
@@ -39,9 +38,6 @@ import type {
   GraphQLType,
   TypeNode,
 } from 'graphql';
-
-const ID = 'id';
-const ID_TYPE = 'ID';
 
 type GraphQLSingularType =
   | GraphQLScalarType
@@ -77,27 +73,6 @@ function canHaveSelections(type: GraphQLType): boolean {
   return (
     type instanceof GraphQLObjectType || type instanceof GraphQLInterfaceType
   );
-}
-
-/**
- * Implements duck typing that checks whether a type has an id field of the ID
- * type. This is approximating what we can hopefully do with the __id proposal
- * a bit more cleanly.
- *
- * https://github.com/graphql/graphql-future/blob/master/01%20-%20__id.md
- */
-function hasID(schema: GraphQLSchema, type: GraphQLCompositeType): boolean {
-  const unmodifiedType = getRawType(type);
-  invariant(
-    unmodifiedType instanceof GraphQLObjectType ||
-      unmodifiedType instanceof GraphQLInterfaceType,
-    'GraphQLSchemaUtils.hasID(): Expected a concrete type or interface, ' +
-      'got type `%s`.',
-    type,
-  );
-  const idType = schema.getType(ID_TYPE);
-  const idField = unmodifiedType.getFields()[ID];
-  return idField && getRawType(idField.type) === idType;
 }
 
 /**
@@ -249,7 +224,6 @@ module.exports = {
   getRawType,
   getSingularType,
   getTypeFromAST,
-  hasID,
   implementsInterface,
   isAbstractType,
   isUnionType,
