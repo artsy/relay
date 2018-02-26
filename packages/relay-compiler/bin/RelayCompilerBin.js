@@ -87,10 +87,11 @@ function getFilepathsFromGlob(
   });
 }
 
-function getLanguagePlugin(options: {language: string}): PluginInterface {
-  if (options.language === 'javascript') {
+function getLanguagePlugin(language: string): PluginInterface {
+  if (language === 'javascript') {
     return RelayLanguagePluginJavaScript();
   } else {
+    const pluginName = `relay-compiler-language-${language}`;
     try {
       /* eslint-disable no-undef */
       // Make sure to use Node's `require` function when bundled with webpack.
@@ -101,20 +102,23 @@ function getLanguagePlugin(options: {language: string}): PluginInterface {
           : require;
       /* eslint-enable no-undef */
       let languagePlugin: PluginInitializer | {default: PluginInitializer};
-      languagePlugin = _require(`relay-compiler-language-${options.language}`);
+      languagePlugin = _require(pluginName);
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
       if (typeof languagePlugin === 'function') {
         return languagePlugin();
+      } else {
+        throw new Error('Expected plugin to export a function.');
       }
-    } catch (err) {}
+    } catch (err) {
+      const e = new Error(
+        `Unable to load language plugin ${pluginName}: ${err.message}`,
+      );
+      e.stack = err.stack;
+      throw e;
+    }
   }
-  throw new Error(
-    `Unable to load language plugin: relay-compiler-language-${
-      options.language
-    }`,
-  );
 }
 
 async function run(options: {
@@ -169,7 +173,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
 
   const schema = getSchema(schemaPath);
 
-  const languagePlugin = getLanguagePlugin(options);
+  const languagePlugin = getLanguagePlugin(options.language);
 
   const extensions = options.extensions || languagePlugin.inputExtensions;
 
