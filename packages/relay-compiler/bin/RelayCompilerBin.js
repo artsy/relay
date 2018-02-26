@@ -93,10 +93,15 @@ function getLanguagePlugin(options: {language: string}): PluginInterface {
   } else {
     try {
       /* eslint-disable no-undef */
-      let languagePlugin: PluginInitializer | {default: PluginInitializer} =
+      // Make sure to use Node's `require` function when bundled with webpack.
+      const _require: typeof require =
         // $FlowFixMe
-        __non_webpack_require__(`relay-compiler-language-${options.language}`);
+        __non_webpack_require__ != undefined
+          ? __non_webpack_require__
+          : require;
       /* eslint-enable no-undef */
+      let languagePlugin: PluginInitializer | {default: PluginInitializer};
+      languagePlugin = _require(`relay-compiler-language-${options.language}`);
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
