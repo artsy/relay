@@ -192,7 +192,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
       path.resolve(process.cwd(), options.artifactDirectory)
     : null;
 
-  const isGeneratedDirectory = artifactDirectory || '__generated__';
+  const generatedDirectoryName = artifactDirectory || '__generated__';
 
   const parserConfigs = {
     js: {
@@ -224,7 +224,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
       getWriter: getRelayFileWriter(srcDir, languagePlugin, artifactDirectory),
       isGeneratedFile: (filePath: string) =>
         filePath.endsWith('.graphql.' + languagePlugin.outputExtension) &&
-        filePath.includes(isGeneratedDirectory),
+        filePath.includes(generatedDirectoryName),
       parser: 'js',
       baseParsers: ['graphql'],
     },
