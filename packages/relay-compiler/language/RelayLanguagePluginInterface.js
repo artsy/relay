@@ -26,8 +26,7 @@ import type {IRTransform, Root, Fragment} from 'graphql-compiler';
  * artifact file.
  *
  * This interface describes the details relay-compiler requires to be able to
- * use the plugin. The plugin is expected to have as its main default export a
- * function that returns an object conforming to this interface.
+ * use the plugin and is expected to be returned by a {PluginInitializer}.
  */
 export type PluginInterface = {
   inputExtensions: string[],
@@ -36,6 +35,14 @@ export type PluginInterface = {
   formatModule: FormatModule,
   typeGenerator: TypeGenerator,
 };
+
+/**
+ * The plugin is expected to have as its main default export a function that
+ * returns an object conforming to the plugin interface.
+ *
+ * For now a plugin doesn’t take any arguments, but may do so in the future.
+ */
+export type PluginInitializer = () => PluginInterface;
 
 export type GraphQLTag = {
   /**

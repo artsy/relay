@@ -47,7 +47,10 @@ const {
 
 import type {GetWriterOptions} from 'graphql-compiler';
 import type {GraphQLSchema} from 'graphql';
-import type {PluginInterface} from '../language/RelayLanguagePluginInterface';
+import type {
+  PluginInitializer,
+  PluginInterface,
+} from '../language/RelayLanguagePluginInterface';
 
 function buildWatchExpression(options: {
   extensions: Array<string>,
@@ -89,16 +92,15 @@ function getLanguagePlugin(options: {language: string}): PluginInterface {
     return RelayLanguagePluginJavaScript();
   } else {
     try {
-      // prettier-ignore
-      // $FlowFixMe
-      let languagePlugin = __non_webpack_require__( // eslint-disable-line no-undef
-        `relay-compiler-language-${options.language}`,
-      );
+      /* eslint-disable no-undef */
+      let languagePlugin: PluginInitializer | {default: PluginInitializer} =
+        // $FlowFixMe
+        __non_webpack_require__(`relay-compiler-language-${options.language}`);
+      /* eslint-enable no-undef */
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
       if (typeof languagePlugin === 'function') {
-        // For now a plugin doesn’t take any arguments, but may do so in the future.
         return languagePlugin();
       }
     } catch (err) {}
