@@ -87,22 +87,24 @@ function getFilepathsFromGlob(
   });
 }
 
+type LanguagePlugin = PluginInitializer | {default: PluginInitializer};
+
+/**
+ * Unless the requested plugin is the builtin `javascript` one, import a
+ * language plugin as either a CommonJS or ES2015 module.
+ *
+ * Make sure to always use Node's `require` function, which otherwise would get
+ * replaced with `__webpack_require__` when bundled using webpack, by using
+ * `eval` to get it at runtime.
+ */
 function getLanguagePlugin(language: string): PluginInterface {
   if (language === 'javascript') {
     return RelayLanguagePluginJavaScript();
   } else {
     const pluginName = `relay-compiler-language-${language}`;
     try {
-      /* eslint-disable no-undef */
-      // Make sure to use Node's `require` function when bundled with webpack.
-      const _require: typeof require =
-        // $FlowFixMe
-        __non_webpack_require__ != undefined
-          ? __non_webpack_require__
-          : require;
-      /* eslint-enable no-undef */
-      let languagePlugin: PluginInitializer | {default: PluginInitializer};
-      languagePlugin = _require(pluginName);
+      // eslint-disable-next-line no-eval
+      let languagePlugin: LanguagePlugin = eval('require')(pluginName);
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
