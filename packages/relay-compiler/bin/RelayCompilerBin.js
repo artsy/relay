@@ -181,15 +181,13 @@ Ensure that one such file exists in ${srcDir} or its parents.
 
   const schema = getSchema(schemaPath);
 
-  const graphqlSearchOptions = {
-    extensions: ['graphql'],
-    include: options.include,
-    exclude: [path.relative(srcDir, schemaPath)].concat(options.exclude),
-  };
-
   const languagePlugin = getLanguagePlugin(options.language);
 
-  const extensions = options.extensions || languagePlugin.inputExtensions;
+  const inputExtensions = options.extensions || languagePlugin.inputExtensions;
+  const outputExtension = languagePlugin.outputExtension;
+
+  const sourceParserName = inputExtensions.join('/');
+  const sourceWriterName = outputExtension;
 
   const sourceModuleParser = RelaySourceModuleParser(
     languagePlugin.findGraphQLTags,
@@ -202,18 +200,25 @@ Ensure that one such file exists in ${srcDir} or its parents.
 
   const generatedDirectoryName = artifactDirectory || '__generated__';
 
+  const sourceSearchOptions = {...options, inputExtensions};
+  const graphqlSearchOptions = {
+    extensions: ['graphql'],
+    include: options.include,
+    exclude: [path.relative(srcDir, schemaPath)].concat(options.exclude),
+  };
+
   const parserConfigs = {
-    js: {
+    [sourceParserName]: {
       baseDir: srcDir,
       getFileFilter: sourceModuleParser.getFileFilter,
       getParser: sourceModuleParser.getParser,
       getSchema: () => schema,
       watchmanExpression: useWatchman
-        ? buildWatchExpression({...options, extensions})
+        ? buildWatchExpression(sourceSearchOptions)
         : null,
       filepaths: useWatchman
         ? null
-        : getFilepathsFromGlob(srcDir, {...options, extensions}),
+        : getFilepathsFromGlob(srcDir, sourceSearchOptions),
     },
     graphql: {
       baseDir: srcDir,
@@ -228,12 +233,12 @@ Ensure that one such file exists in ${srcDir} or its parents.
     },
   };
   const writerConfigs = {
-    js: {
+    [sourceWriterName]: {
       getWriter: getRelayFileWriter(srcDir, languagePlugin, artifactDirectory),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.graphql.' + languagePlugin.outputExtension) &&
+        filePath.endsWith('.graphql.' + outputExtension) &&
         filePath.includes(generatedDirectoryName),
-      parser: 'js',
+      parser: sourceParserName,
       baseParsers: ['graphql'],
     },
   };
