@@ -24,6 +24,7 @@ const RelaySourceModuleParser = require('../core/RelaySourceModuleParser');
 const RelayFileWriter = require('../codegen/RelayFileWriter');
 const RelayIRTransforms = require('../core/RelayIRTransforms');
 const RelayLanguagePluginJavaScript = require('../language/javascript/RelayLanguagePluginJavaScript');
+const persistQuery = require('../codegen/persistQuery');
 
 const fs = require('fs');
 const path = require('path');
@@ -142,6 +143,8 @@ async function run(options: {
   quiet: boolean,
   language: string,
   artifactDirectory: ?string,
+  persist: boolean,
+  'persist-output': string,
 }) {
   const schemaPath = path.resolve(process.cwd(), options.schema);
   if (!fs.existsSync(schemaPath)) {
@@ -149,8 +152,28 @@ async function run(options: {
   }
   const srcDir = path.resolve(process.cwd(), options.src);
   if (!fs.existsSync(srcDir)) {
-    throw new Error(`--source path does not exist: ${srcDir}.`);
+    throw new Error(`--src path does not exist: ${srcDir}.`);
   }
+
+  const persist = options.persist;
+  let persistOutput = options['persist-output'];
+  if (persistOutput) {
+    persistOutput = path.resolve(process.cwd(), persistOutput);
+    const persistOutputDir = path.dirname(persistOutput);
+    if (!fs.existsSync(persistOutputDir)) {
+      throw new Error(
+        `--persist-output path does not exist: ${persistOutputDir}.`,
+      );
+    }
+
+    const persistOutputFileExtension = path.extname(persistOutput);
+    if (persistOutputFileExtension !== '.json') {
+      throw new Error(
+        `--persist-output must be a path to a .json file: ${persistOutput}.`,
+      );
+    }
+  }
+
   if (options.watch && !options.watchman) {
     throw new Error('Watchman is required to watch for changes.');
   }
@@ -246,9 +269,16 @@ Ensure that one such file exists in ${srcDir} or its parents.
   };
   const writerConfigs = {
     [sourceWriterName]: {
-      getWriter: getRelayFileWriter(srcDir, languagePlugin, artifactDirectory),
+      getWriter: getRelayFileWriter(
+        srcDir,
+        languagePlugin,
+        artifactDirectory,
+        persist,
+        persistOutput,
+      ),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.graphql.' + outputExtension) &&
+        (filePath.endsWith('.graphql.' + outputExtension) ||
+          filePath.endsWith('.graphql.json')) &&
         filePath.includes(generatedDirectoryName),
       parser: sourceParserName,
       baseParsers: ['graphql'],
@@ -282,6 +312,8 @@ function getRelayFileWriter(
   baseDir: string,
   languagePlugin: PluginInterface,
   outputDir?: ?string,
+  persist: boolean,
+  persistOutput: string,
 ) {
   return ({
     onlyValidate,
@@ -309,6 +341,8 @@ function getRelayFileWriter(
         extension: languagePlugin.outputExtension,
         typeGenerator: languagePlugin.typeGenerator,
         outputDir,
+        persistQuery: persist ? persistQuery : undefined,
+        persistOutput,
       },
       onlyValidate,
       schema,
@@ -347,6 +381,7 @@ ${error.stack}
 // Ensure that a watchman "root" file exists in the given directory
 // or a parent so that it can be watched
 const WATCHMAN_ROOT_FILES = ['.git', '.hg', '.watchmanconfig'];
+
 function hasWatchmanRootFile(testPath) {
   while (path.dirname(testPath) !== testPath) {
     if (
@@ -436,6 +471,16 @@ const argv = yargs
       describe:
         'A specific directory to output all artifacts to. When enabling this ' +
         'the babel plugin needs `artifactDirectory` set as well.',
+      type: 'string',
+      default: null,
+    },
+    persist: {
+      describe: 'Use an md5 hash as query id to replace operation text',
+      type: 'boolean',
+    },
+    'persist-output': {
+      describe:
+        'The json filepath where the complete query map file will be written to',
       type: 'string',
       default: null,
     },
