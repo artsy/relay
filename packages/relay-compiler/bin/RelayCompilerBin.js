@@ -200,7 +200,11 @@ Ensure that one such file exists in ${srcDir} or its parents.
 
   const generatedDirectoryName = artifactDirectory || '__generated__';
 
-  const sourceSearchOptions = {...options, extensions: inputExtensions};
+  const sourceSearchOptions = {
+    extensions: inputExtensions,
+    include: options.include,
+    exclude: ['**/*.graphql.*', ...options.exclude], // Do not include artifacts
+  };
   const graphqlSearchOptions = {
     extensions: ['graphql'],
     include: options.include,
