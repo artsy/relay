@@ -93,6 +93,9 @@ type LanguagePlugin = PluginInitializer | {default: PluginInitializer};
  * Unless the requested plugin is the builtin `javascript` one, import a
  * language plugin as either a CommonJS or ES2015 module.
  *
+ * When importing, first check if it’s a path to an existing file, otherwise
+ * assume it’s a package and prepend the plugin namespace prefix.
+ *
  * Make sure to always use Node's `require` function, which otherwise would get
  * replaced with `__webpack_require__` when bundled using webpack, by using
  * `eval` to get it at runtime.
@@ -101,10 +104,13 @@ function getLanguagePlugin(language: string): PluginInterface {
   if (language === 'javascript') {
     return RelayLanguagePluginJavaScript();
   } else {
-    const pluginName = `relay-compiler-language-${language}`;
+    const pluginPath = path.resolve(process.cwd(), language);
+    const requirePath = fs.existsSync(pluginPath)
+      ? pluginPath
+      : `relay-compiler-language-${language}`;
     try {
       // eslint-disable-next-line no-eval
-      let languagePlugin: LanguagePlugin = eval('require')(pluginName);
+      let languagePlugin: LanguagePlugin = eval('require')(requirePath);
       if (languagePlugin.default) {
         languagePlugin = languagePlugin.default;
       }
@@ -115,7 +121,7 @@ function getLanguagePlugin(language: string): PluginInterface {
       }
     } catch (err) {
       const e = new Error(
-        `Unable to load language plugin ${pluginName}: ${err.message}`,
+        `Unable to load language plugin ${requirePath}: ${err.message}`,
       );
       e.stack = err.stack;
       throw e;
