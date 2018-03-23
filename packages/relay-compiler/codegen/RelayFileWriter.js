@@ -16,10 +16,12 @@ const RelayParser = require('../core/RelayParser');
 const RelayValidator = require('../core/RelayValidator');
 
 const compileRelayArtifacts = require('./compileRelayArtifacts');
-const crypto = require('crypto');
 const graphql = require('graphql');
 const invariant = require('invariant');
 const path = require('path');
+const fs = require('fs');
+const md5 = require('../util/md5');
+
 const writeRelayGeneratedFile = require('./writeRelayGeneratedFile');
 
 const {
@@ -60,6 +62,7 @@ export type WriterConfig = {
   inputFieldWhiteListForFlow: Array<string>,
   outputDir?: string,
   persistQuery?: (text: string) => Promise<string>,
+  persistOutput?: string,
   platform?: string,
   relayRuntimeModule?: string,
   schemaExtensions: Array<string>,
@@ -327,6 +330,11 @@ class RelayFileWriter implements FileWriterInterface {
         allOutputDirectories.forEach(dir => {
           dir.deleteExtraFiles();
         });
+
+        if (this._config.persistQuery) {
+          this.writeCompleteQueryMap(allOutputDirectories);
+        }
+
         if (this._sourceControl && !this._onlyValidate) {
           await CodegenDirectory.sourceControlAddRemove(
             this._sourceControl,
@@ -353,13 +361,41 @@ class RelayFileWriter implements FileWriterInterface {
       return allOutputDirectories;
     });
   }
-}
 
-function md5(x: string): string {
-  return crypto
-    .createHash('md5')
-    .update(x, 'utf8')
-    .digest('hex');
+  /**
+   * Find all *.graphql.json and write it into a single file.
+   * @param allOutputDirectories
+   */
+  writeCompleteQueryMap(
+    allOutputDirectories: Map<string, CodegenDirectory>,
+  ): void {
+    const queryMapFilePath =
+      this._config.persistOutput ||
+      `${this._config.baseDir}/queryMap.graphql.json`;
+    try {
+      let queryMapJson = {};
+      allOutputDirectories.forEach(d => {
+        fs.readdirSync(d._dir).forEach(f => {
+          if (f.endsWith('.graphql.json')) {
+            const singleQueryMap = JSON.parse(
+              fs.readFileSync(path.join(d._dir, f), 'utf8'),
+            );
+            queryMapJson = {
+              ...queryMapJson,
+              ...singleQueryMap,
+            };
+          }
+        });
+      });
+
+      fs.writeFileSync(queryMapFilePath, JSON.stringify(queryMapJson, null, 2));
+      this._reporter.reportMessage(
+        `Complete queryMap written to ${queryMapFilePath}`,
+      );
+    } catch (err) {
+      this._reporter.reportError('RelayFileWriter.writeCompleteQueryMap', err);
+    }
+  }
 }
 
 function validateConfig(config: Object): void {

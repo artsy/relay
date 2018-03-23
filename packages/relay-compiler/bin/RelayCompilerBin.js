@@ -23,6 +23,7 @@ const {
 const RelayJSModuleParser = require('../core/RelayJSModuleParser');
 const RelayFileWriter = require('../codegen/RelayFileWriter');
 const RelayIRTransforms = require('../core/RelayIRTransforms');
+const persistQuery = require('../codegen/persistQuery');
 
 const formatGeneratedModule = require('../codegen/formatGeneratedModule');
 const fs = require('fs');
@@ -94,6 +95,8 @@ async function run(options: {
   watch?: ?boolean,
   validate: boolean,
   quiet: boolean,
+  persist: boolean,
+  'persist-output': string,
 }) {
   const schemaPath = path.resolve(process.cwd(), options.schema);
   if (!fs.existsSync(schemaPath)) {
@@ -101,8 +104,28 @@ async function run(options: {
   }
   const srcDir = path.resolve(process.cwd(), options.src);
   if (!fs.existsSync(srcDir)) {
-    throw new Error(`--source path does not exist: ${srcDir}.`);
+    throw new Error(`--src path does not exist: ${srcDir}.`);
   }
+
+  const persist = options.persist;
+  let persistOutput = options['persist-output'];
+  if (persistOutput) {
+    persistOutput = path.resolve(process.cwd(), persistOutput);
+    const persistOutputDir = path.dirname(persistOutput);
+    if (!fs.existsSync(persistOutputDir)) {
+      throw new Error(
+        `--persist-output path does not exist: ${persistOutputDir}.`,
+      );
+    }
+
+    const persistOutputFileExtension = path.extname(persistOutput);
+    if (persistOutputFileExtension !== '.json') {
+      throw new Error(
+        `--persist-output must be a path to a .json file: ${persistOutput}.`,
+      );
+    }
+  }
+
   if (options.watch && !options.watchman) {
     throw new Error('Watchman is required to watch for changes.');
   }
@@ -163,9 +186,10 @@ Ensure that one such file exists in ${srcDir} or its parents.
   };
   const writerConfigs = {
     js: {
-      getWriter: getRelayFileWriter(srcDir),
+      getWriter: getRelayFileWriter(srcDir, persist, persistOutput),
       isGeneratedFile: (filePath: string) =>
-        filePath.endsWith('.js') && filePath.includes('__generated__'),
+        (filePath.endsWith('.js') || filePath.endsWith('.graphql.json')) &&
+        filePath.includes('__generated__'),
       parser: 'js',
       baseParsers: ['graphql'],
     },
@@ -194,7 +218,11 @@ Ensure that one such file exists in ${srcDir} or its parents.
   }
 }
 
-function getRelayFileWriter(baseDir: string) {
+function getRelayFileWriter(
+  baseDir: string,
+  persist: boolean,
+  persistOutput: string,
+) {
   return ({
     onlyValidate,
     schema,
@@ -218,6 +246,8 @@ function getRelayFileWriter(baseDir: string) {
         inputFieldWhiteListForFlow: [],
         schemaExtensions,
         useHaste: false,
+        persistQuery: persist ? persistQuery : undefined,
+        persistOutput,
       },
       onlyValidate,
       schema,
@@ -256,6 +286,7 @@ ${error.stack}
 // Ensure that a watchman "root" file exists in the given directory
 // or a parent so that it can be watched
 const WATCHMAN_ROOT_FILES = ['.git', '.hg', '.watchmanconfig'];
+
 function hasWatchmanRootFile(testPath) {
   while (path.dirname(testPath) !== testPath) {
     if (
@@ -333,6 +364,16 @@ const argv = yargs
         'writing to disk',
       type: 'boolean',
       default: false,
+    },
+    persist: {
+      describe: 'Use an md5 hash as query id to replace operation text',
+      type: 'boolean',
+    },
+    'persist-output': {
+      describe:
+        'The json filepath where the complete query map file will be written to',
+      type: 'string',
+      default: null,
     },
   })
   .help().argv;
