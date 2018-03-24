@@ -41,7 +41,7 @@ async function writeRelayGeneratedFile(
   const moduleName = generatedNode.name + '.graphql';
   const platformName = platform ? moduleName + '.' + platform : moduleName;
   const filename = platformName + '.' + extension;
-  const queryMapFilename = `${generatedNode.name}.graphql.json`;
+  const queryMapFilename = `${generatedNode.name}.queryMap.json`;
   const typeName =
     generatedNode.kind === RelayConcreteNode.FRAGMENT
       ? 'ConcreteFragment'
