@@ -188,7 +188,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
     js: {
       getWriter: getRelayFileWriter(srcDir, persist, persistOutput),
       isGeneratedFile: (filePath: string) =>
-        (filePath.endsWith('.js') || filePath.endsWith('.graphql.json')) &&
+        (filePath.endsWith('.js') || filePath.endsWith('.queryMap.json')) &&
         filePath.includes('__generated__'),
       parser: 'js',
       baseParsers: ['graphql'],

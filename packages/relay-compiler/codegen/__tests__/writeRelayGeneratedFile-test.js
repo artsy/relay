@@ -48,7 +48,7 @@ describe('writeRelayGeneratedFile', () => {
       expect(codeGenDir.writeFile.mock.calls.length).toEqual(2);
       expect(codeGenDir.writeFile.mock.calls[0][0]).toBe('summaryBar_refetch_Query.graphql.js');
       expect(codeGenDir.writeFile.mock.calls[0][1]).toBe('mockFormatModuleOuput');
-      expect(codeGenDir.writeFile).lastCalledWith('summaryBar_refetch_Query.graphql.json', `{
+      expect(codeGenDir.writeFile).lastCalledWith('summaryBar_refetch_Query.queryMap.json', `{
   \"${expectedQueryId}\": \"${node.text}\"
 }`);
     });
@@ -82,7 +82,7 @@ describe('writeRelayGeneratedFile', () => {
       expect(codeGenDir.writeFile.mock.calls.length).toEqual(2);
       expect(codeGenDir.writeFile.mock.calls[0][0]).toBe('summaryBar_refetch_Query.graphql.js');
       expect(codeGenDir.writeFile.mock.calls[0][1]).toBe('mockFormatModuleOuput');
-      expect(codeGenDir.writeFile).lastCalledWith('summaryBar_refetch_Query.graphql.json', `{
+      expect(codeGenDir.writeFile).lastCalledWith('summaryBar_refetch_Query.queryMap.json', `{
   \"${expectedQueryId}\": \"${node.requests[0].text}\"
 }`);
     });
@@ -112,7 +112,7 @@ describe('writeRelayGeneratedFile', () => {
       expect(codeGenDir.writeFile).lastCalledWith('summaryBar_refetch_Query.graphql.js', 'mockFormatModuleOuput');
     });
 
-    test('should mark graphql.json as unchanged if hash is unchanged', async () => {
+    test('should mark queryMap.json as unchanged if hash is unchanged', async () => {
       jest.doMock('crypto', () => ({createHash: () => ({update: () => '', digest: () => null})}));
 
       const node = {
@@ -136,10 +136,10 @@ describe('writeRelayGeneratedFile', () => {
       expect(codeGenDir.markUnchanged.mock.calls.length).toEqual(2);
       expect(codeGenDir.markUpdated).not.toBeCalled();
       expect(codeGenDir.markUnchanged.mock.calls[0][0]).toBe('summaryBar_refetch_Query.graphql.js');
-      expect(codeGenDir.markUnchanged).lastCalledWith('summaryBar_refetch_Query.graphql.json');
+      expect(codeGenDir.markUnchanged).lastCalledWith('summaryBar_refetch_Query.queryMap.json');
     });
 
-    test('should mark graphql.json as updated when only validating', async () => {
+    test('should mark queryMap.json as updated when only validating', async () => {
       jest.unmock('crypto');
       codeGenDir.onlyValidate = true;
 
@@ -164,7 +164,7 @@ describe('writeRelayGeneratedFile', () => {
       expect(codeGenDir.markUnchanged).not.toBeCalled();
       expect(codeGenDir.markUpdated.mock.calls.length).toEqual(2);
       expect(codeGenDir.markUpdated.mock.calls[0][0]).toBe('summaryBar_refetch_Query.graphql.js');
-      expect(codeGenDir.markUpdated).lastCalledWith('summaryBar_refetch_Query.graphql.json');
+      expect(codeGenDir.markUpdated).lastCalledWith('summaryBar_refetch_Query.queryMap.json');
     });
   });
 });

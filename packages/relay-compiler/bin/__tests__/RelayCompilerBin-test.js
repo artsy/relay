@@ -56,7 +56,7 @@ describe('RelayCompilerBin', () => {
   });
 
   test('should throw error when persist-output path does not exist', async () => {
-    mockCliArguments('./', './', 'some/path/queryMap.graphql.json');
+    mockCliArguments('./', './', 'some/path/queryMap.json');
 
     await require('../RelayCompilerBin');
 

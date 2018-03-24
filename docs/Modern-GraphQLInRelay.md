@@ -142,7 +142,7 @@ Will cause a generated file to appear in `./__generated__/MyComponent.graphql`,
 with both runtime artifacts (which help to read and write from the Relay Store)
 and [Flow types](https://flow.org/) to help you write type-safe code.
 
-The Relay Compiler is responsible for generating code as part of a build step which, at runtime, can be used statically. By building the query ahead of time, the client's JS runtime is not responsible for generating a query string, and fields that are duplicated in the query can be merged during the build step, to improve parsing efficiency. 
+The Relay Compiler is responsible for generating code as part of a build step which, at runtime, can be used statically. By building the query ahead of time, the client's JS runtime is not responsible for generating a query string, and fields that are duplicated in the query can be merged during the build step, to improve parsing efficiency.
 
 ### Persisting queries
 The Relay Compiler can convert a query or mutation's text into a unique identifier during compilation. This can greatly reduce the upload bytes required in some applications.
@@ -164,8 +164,8 @@ The Relay Compiler can persist your queries with the `--persist` flag:
 }
 ```
 
-This will create a matching `./__generated__/MyComponent.graphql.json` containing the query id and the operation text of the query in the same directory.
-The Relay Compiler aggregates all the generated `*.graphql.json` files into a single complete query map file at `./src/queryMap.graphql.json`. You can then use this complete
+This will create a matching `./__generated__/MyComponent.queryMap.json` containing the query id and the operation text of the query in the same directory.
+The Relay Compiler aggregates all the generated `*.queryMap.json` files into a single complete query map file at `./src/queryMap.json`. You can then use this complete
 json file in your server side to map query ids to operation text.
 
 For more details, refer to the [Persisted Queries section](./persisted-queries.html).
@@ -248,7 +248,7 @@ This would produce three generated files, and two `__generated__` directories:
 
 If you use `--persist`, then an extra query map json file will also be generated:
 
-* `src/Queries/__generated__/DictionaryQuery.graphql.json`
+* `src/Queries/__generated__/DictionaryQuery.queryMap.json`
 
 Only one query map json file is generated in this instance because only concrete queries can be persisted. Fragments are not persisted.
 
