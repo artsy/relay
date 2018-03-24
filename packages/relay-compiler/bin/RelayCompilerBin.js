@@ -270,7 +270,7 @@ Ensure that one such file exists in ${srcDir} or its parents.
       ),
       isGeneratedFile: (filePath: string) =>
         (filePath.endsWith('.graphql.' + outputExtension) ||
-          filePath.endsWith('.graphql.json')) &&
+          filePath.endsWith('.queryMap.json')) &&
         filePath.includes(generatedDirectoryName),
       parser: sourceParserName,
       baseParsers: ['graphql'],
